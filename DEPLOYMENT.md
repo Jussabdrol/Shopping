@@ -1,198 +1,142 @@
-# Deployment Guide: Railway + Supabase
+# Deployment guide — Railway + Supabase
 
-## Recommended Stack
-| Layer | Choice | Why |
-|---|---|---|
-| Framework | Next.js 14 (App Router) | SSR, API routes, easy Railway deploy |
-| Database | Supabase (Postgres) | Auth + realtime + simple row-level security |
-| Hosting | Railway | One-click Next.js deploys, env var management |
-| Auth | Supabase Auth | Email/password or magic link — one user per device is fine for this app |
+This app is a Next.js 14 (App Router) project that uses Supabase for
+auth + persistence and runs on Railway.
 
----
-
-## 1. Supabase Setup
-
-### Create project
-1. Go to [supabase.com](https://supabase.com) → New project
-2. Note your **Project URL** and **anon public key** (Settings → API)
-
-### Database schema
-
-```sql
--- Users are handled by Supabase Auth (auth.users)
-
--- Weeks
-create table weeks (
-  id          uuid primary key default gen_random_uuid(),
-  user_id     uuid references auth.users(id) on delete cascade not null,
-  week_num    integer not null,
-  created_at  timestamptz default now(),
-  unique(user_id, week_num)
-);
-
--- Ingredients (one row per ingredient per day per week)
-create table ingredients (
-  id          uuid primary key default gen_random_uuid(),
-  week_id     uuid references weeks(id) on delete cascade not null,
-  day_key     text not null,   -- 'Maandag' | 'Dinsdag' | ... | 'general'
-  name        text not null,
-  category    text not null,   -- 'vegetables' | 'meats' | 'dairy' | 'dry' | 'cleaning'
-  position    integer default 0,
-  created_at  timestamptz default now()
-);
-
--- Checked state (grocery list)
-create table checked_items (
-  id             uuid primary key default gen_random_uuid(),
-  user_id        uuid references auth.users(id) on delete cascade not null,
-  ingredient_id  uuid references ingredients(id) on delete cascade not null,
-  unique(user_id, ingredient_id)
-);
-
--- History (autocomplete)
-create table ingredient_history (
-  id          uuid primary key default gen_random_uuid(),
-  user_id     uuid references auth.users(id) on delete cascade not null,
-  name        text not null,
-  category    text not null,
-  used_count  integer default 1,
-  updated_at  timestamptz default now(),
-  unique(user_id, name)
-);
-```
-
-### Row Level Security (RLS)
-Enable RLS on all tables and add policies so users can only access their own data:
-
-```sql
--- Example for ingredients (repeat pattern for all tables)
-alter table ingredients enable row level security;
-
-create policy "Users can manage their own ingredients"
-  on ingredients
-  using (
-    week_id in (
-      select id from weeks where user_id = auth.uid()
-    )
-  );
-```
+- Code lives at the repo root.
+- Database schema: `supabase/schema.sql`.
+- Railway build config: `railway.toml` + `nixpacks.toml`.
 
 ---
 
-## 2. Next.js Project Setup
+## 1. Create the Supabase project
+
+1. Sign in at [supabase.com](https://supabase.com) → **New project**.
+2. Pick a region close to your users, set a strong DB password, wait
+   for the project to provision.
+3. In the dashboard, open **Settings → API** and copy:
+   - **Project URL** → this becomes `NEXT_PUBLIC_SUPABASE_URL`
+   - **anon / public key** → this becomes `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+## 2. Create the tables
+
+1. Open **SQL Editor** in the Supabase dashboard.
+2. Paste the contents of [`supabase/schema.sql`](./supabase/schema.sql)
+   and run it. This creates:
+   - `weeks`, `ingredients`, `checked_items`, `ingredient_history`
+   - Indexes and row-level security policies scoped to `auth.uid()`
+
+## 3. Configure magic-link auth
+
+1. Go to **Authentication → Providers** and make sure **Email** is enabled.
+2. Go to **Authentication → URL configuration**:
+   - **Site URL**: your Railway URL once it's deployed (for example
+     `https://slim-boodschappen.up.railway.app`). While you're still
+     developing locally you can use `http://localhost:3000`.
+   - **Additional redirect URLs**: add `${SITE_URL}/auth/callback`
+     (and the localhost equivalent for dev). The app uses this route
+     to exchange the magic-link code for a session.
+
+## 4. Run locally
 
 ```bash
-npx create-next-app@latest boodschappen --typescript --tailwind --app
-cd boodschappen
-npm install @supabase/supabase-js @supabase/ssr
+cp .env.example .env.local
+# Fill in NEXT_PUBLIC_SUPABASE_URL + NEXT_PUBLIC_SUPABASE_ANON_KEY
+npm install
+npm run dev
+# → http://localhost:3000
 ```
 
-### Environment variables (`.env.local`)
-```
-NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-```
+If you start the dev server without env vars, the app still runs — it
+falls back to the localStorage-only mode and skips the login flow.
 
-### Supabase client (`lib/supabase.ts`)
-```ts
-import { createBrowserClient } from '@supabase/ssr';
+## 5. Push to GitHub
 
-export function createClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-}
+This repo is already a git repository. Push the current branch to
+GitHub so Railway can pick it up:
+
+```bash
+git push -u origin claude/build-from-design-specs-cMUEh
 ```
 
----
+(Or merge into `main`/`demo` first and deploy from there — Railway
+just needs a branch to track.)
 
-## 3. Key API Routes / Server Actions
+## 6. Deploy on Railway
 
-Implement these as Next.js Server Actions or Route Handlers:
-
-| Action | Description |
-|---|---|
-| `getOrCreateWeek(userId, weekNum)` | Upsert a week row, return its `id` |
-| `getWeekData(weekId)` | Fetch all ingredients for a week, grouped by `day_key` |
-| `addIngredient(weekId, dayKey, name, category)` | Insert ingredient row; upsert history |
-| `deleteIngredient(ingredientId)` | Delete row |
-| `toggleChecked(userId, ingredientId)` | Upsert / delete from `checked_items` |
-| `clearChecked(userId, ingredientIds[])` | Bulk delete from `checked_items` |
-| `getHistory(userId, query)` | Search `ingredient_history` by name ILIKE `%query%`, order by `used_count desc` |
-
----
-
-## 4. Railway Deployment
-
-### Steps
-1. Push your Next.js project to a GitHub repo
-2. Go to [railway.app](https://railway.app) → New Project → Deploy from GitHub repo
-3. Railway auto-detects Next.js and sets the build command to `npm run build`
-4. Add environment variables in Railway dashboard:
+1. Go to [railway.app](https://railway.app) → **New Project →
+   Deploy from GitHub repo** and pick your repo and branch.
+2. Railway detects `nixpacks.toml` / `railway.toml` and uses
+   `npm ci → npm run build → npm start`.
+3. Open the new service → **Variables** and add:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-5. Deploy — Railway assigns a public URL (e.g. `boodschappen.up.railway.app`)
+4. Hit **Deploy**. When it's live, open **Settings → Networking →
+   Generate domain** to get a public URL (e.g.
+   `slim-boodschappen.up.railway.app`).
+5. Go back to Supabase → **Authentication → URL configuration** and
+   update the Site URL + redirect URL to that Railway domain.
 
-### Custom domain (optional)
-Settings → Networking → Add custom domain → point your DNS CNAME to Railway's target.
+## 7. Custom domain (optional)
 
-### `railway.toml` (optional, for explicit config)
-```toml
-[build]
-builder = "NIXPACKS"
-
-[deploy]
-startCommand = "npm start"
-healthcheckPath = "/"
-```
+Railway: **Settings → Networking → Custom domain** — point a CNAME at
+the target Railway provides. Then update the Supabase redirect URL
+one more time.
 
 ---
 
-## 5. Auth Flow
+## Environment variables
 
-For a personal grocery app, the simplest approach:
-- Magic link (passwordless email) via Supabase Auth
-- On first visit, show a simple email input → "Stuur inloglink"
-- Supabase sends a link; user clicks it → session cookie set via `@supabase/ssr`
-- All data is scoped to `auth.uid()` automatically via RLS
+| Key | Required | Used where |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | yes (to enable auth) | browser + server Supabase clients |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes (to enable auth) | browser + server Supabase clients |
+| `PORT` | no | injected by Railway; `npm start` reads it |
 
----
-
-## 6. Migration from localStorage
-
-On first login, check if `localStorage` contains existing data (`grocery-weeks`, `grocery-history`, etc.) and offer to import it into Supabase. This gives existing prototype users a smooth migration.
-
-```ts
-const localWeeks = localStorage.getItem('grocery-weeks');
-if (localWeeks && userIsNewToSupabase) {
-  await migrateLocalDataToSupabase(JSON.parse(localWeeks));
-  localStorage.clear();
-}
-```
+If both Supabase vars are missing the app runs in localStorage-only
+mode. That's useful for demos but state isn't shared between devices.
 
 ---
 
-## 7. Suggested Folder Structure
+## What happens on first login
+
+When a user signs in for the first time, `lib/data/migrate.ts`:
+
+1. Reads `grocery-weeks` / `grocery-history` from `localStorage`.
+2. Uploads anything it finds into `weeks`, `ingredients`, and
+   `ingredient_history` scoped to the signed-in user.
+3. Clears the local keys and sets `grocery-migrated-to-supabase=1`
+   so the migration only ever runs once.
+
+## Architecture summary
 
 ```
-boodschappen/
-├── app/
-│   ├── layout.tsx           # Root layout, font imports (Lora + DM Sans)
-│   ├── page.tsx             # Auth gate → redirect to /app
-│   ├── login/page.tsx       # Magic link login screen
-│   └── app/
-│       ├── layout.tsx       # App shell (week selector + tabs)
-│       └── page.tsx         # Main app view
-├── components/
-│   ├── WeekSelector.tsx
-│   ├── MenuTab.tsx
-│   ├── DaySection.tsx
-│   ├── AddIngredientRow.tsx  # Includes autocomplete
-│   ├── GroceryTab.tsx
-│   └── StoreSection.tsx
-├── lib/
-│   ├── supabase.ts
-│   └── api.ts               # Server actions / fetch helpers
-└── .env.local
+app/
+  layout.tsx            # fonts, global shell
+  page.tsx              # server component: picks AppShell vs SupabaseAppShell
+  login/page.tsx        # magic-link form
+  auth/callback/route.ts# exchanges OTP code for a session cookie
+  auth/signout/route.ts # signs the user out
+
+components/
+  AppView.tsx           # pure presentation (used by both containers)
+  AppShell.tsx          # localStorage container
+  SupabaseAppShell.tsx  # Supabase container with optimistic mutations
+  WeekSelector.tsx
+  MenuTab.tsx / DaySection.tsx / AddIngredientRow.tsx
+  GroceryTab.tsx
+
+lib/
+  constants.ts          # Dutch day + category labels, badge classes
+  types.ts
+  useLocalStorage.ts
+  supabase/
+    env.ts client.ts server.ts middleware.ts
+  data/
+    supabaseApi.ts      # CRUD against Supabase
+    migrate.ts          # localStorage → Supabase migration
+
+middleware.ts           # refreshes the Supabase session on every request
+supabase/schema.sql     # run once in the Supabase SQL editor
+railway.toml / nixpacks.toml
 ```
