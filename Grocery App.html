@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Grocery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #1a1a18;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .phone-shell {
+    width: 390px;
+    height: 844px;
+    background: #FAF7F0;
+    border-radius: 50px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.1);
+  }
+  .status-bar {
+    height: 50px;
+    background: #FAF7F0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 0 28px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1C2B0A;
+    position: relative;
+    z-index: 10;
+  }
+  .status-bar .notch {
+    position: absolute;
+    top: 0; left: 50%; transform: translateX(-50%);
+    width: 120px; height: 30px;
+    background: #1a1a18;
+    border-radius: 0 0 20px 20px;
+  }
+  .status-icons { display: flex; gap: 6px; align-items: center; }
+  .app {
+    height: calc(844px - 50px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #FAF7F0;
+  }
+  .app-header {
+    padding: 14px 24px 0;
+    background: #FAF7F0;
+  }
+  .app-header h1 {
+    font-family: 'Lora', serif;
+    font-size: 26px;
+    font-weight: 600;
+    color: #1C2B0A;
+    letter-spacing: -0.5px;
+  }
+  .app-header .subtitle {
+    font-size: 13px;
+    color: #7A8C6E;
+    margin-top: 2px;
+  }
+
+  /* Week selector */
+  .week-selector {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 10px 24px 0;
+    background: #fff;
+    border: 1px solid #EBE7DC;
+    border-radius: 14px;
+    padding: 6px 6px 6px 14px;
+  }
+  .week-label {
+    font-family: 'Lora', serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1C2B0A;
+    flex: 1;
+  }
+  .week-nav-btns { display: flex; gap: 4px; align-items: center; }
+  .week-nav-btn {
+    width: 32px; height: 32px;
+    border-radius: 9px;
+    border: 1.5px solid #E0DDD4;
+    background: #FDFBF7;
+    color: #4A5C3A;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+    font-weight: 600;
+  }
+  .week-nav-btn:active { background: #EBE7DC; }
+  .week-nav-btn:disabled { opacity: 0.3; cursor: default; }
+  .week-add-btn {
+    width: 32px; height: 32px;
+    border-radius: 9px;
+    border: none;
+    background: #2D5A1B;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+    margin-left: 2px;
+  }
+  .week-add-btn:active { background: #1E3E12; }
+
+  /* Tab bar */
+  .tab-bar {
+    display: flex;
+    margin: 10px 24px 0;
+    background: #EBE7DC;
+    border-radius: 12px;
+    padding: 3px;
+    gap: 3px;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: #7A8C6E;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .tab-btn.active {
+    background: #2D5A1B;
+    color: #FAF7F0;
+    box-shadow: 0 2px 8px rgba(45,90,27,0.3);
+  }
+
+  .scroll-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 24px 24px;
+    scroll-behavior: smooth;
+  }
+  .scroll-content::-webkit-scrollbar { display: none; }
+
+  /* Day section */
+  .day-section {
+    background: #fff;
+    border-radius: 16px;
+    margin-bottom: 10px;
+    overflow: visible;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    border: 1px solid #EBE7DC;
+  }
+  .day-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 16px;
+    cursor: pointer;
+    transition: background 0.15s;
+    user-select: none;
+    border-radius: 16px;
+  }
+  .day-header:active { background: #F5F2EA; }
+  .day-header-left { display: flex; align-items: center; gap: 10px; }
+  .day-dot { width: 8px; height: 8px; border-radius: 50%; background: #2D5A1B; flex-shrink: 0; }
+  .day-dot.general { background: #C4622D; }
+  .day-name { font-size: 14px; font-weight: 600; color: #1C2B0A; }
+  .day-count { font-size: 11px; font-weight: 500; color: #9AAA8A; background: #EBE7DC; padding: 2px 7px; border-radius: 20px; }
+  .day-chevron { font-size: 11px; color: #9AAA8A; transition: transform 0.2s; }
+  .day-chevron.open { transform: rotate(180deg); }
+  .day-body { padding: 0 16px 12px; border-top: 1px solid #F0EDE4; border-radius: 0 0 16px 16px; }
+
+  .ingredient-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 0; border-bottom: 1px solid #F5F2EA;
+  }
+  .ingredient-item:last-child { border-bottom: none; }
+  .ingredient-info { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+  .ingredient-name { font-size: 13px; color: #2A3620; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .category-badge { font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
+  .cat-vegetables { background: #E8F5E0; color: #2D6B0E; }
+  .cat-meats { background: #FDEEE8; color: #A83A1A; }
+  .cat-dairy { background: #EAF3FD; color: #1A5C9A; }
+  .cat-dry { background: #FDF6E8; color: #8A6A10; }
+  .cat-cleaning { background: #EDE8FD; color: #4A2A9A; }
+  .delete-btn { background: none; border: none; color: #C9C2B4; cursor: pointer; font-size: 16px; padding: 2px 4px; line-height: 1; transition: color 0.15s; flex-shrink: 0; }
+  .delete-btn:hover { color: #C4622D; }
+
+  /* Add row */
+  .add-row { display: flex; gap: 6px; margin-top: 10px; align-items: stretch; position: relative; }
+  .add-input-wrap { flex: 1; position: relative; }
+  .add-input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid #E0DDD4;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: #1C2B0A;
+    background: #FDFBF7;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .add-input:focus { border-color: #2D5A1B; }
+  .add-input::placeholder { color: #B5AFA4; }
+
+  /* Autocomplete dropdown */
+  .autocomplete-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    background: #fff;
+    border: 1.5px solid #E0DDD4;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    z-index: 100;
+    overflow: hidden;
+    max-height: 180px;
+    overflow-y: auto;
+  }
+  .autocomplete-dropdown::-webkit-scrollbar { display: none; }
+  .autocomplete-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 12px;
+    cursor: pointer;
+    transition: background 0.1s;
+    border-bottom: 1px solid #F5F2EA;
+  }
+  .autocomplete-item:last-child { border-bottom: none; }
+  .autocomplete-item:hover, .autocomplete-item.highlighted { background: #F5F2EA; }
+  .autocomplete-item-name { font-size: 13px; color: #2A3620; font-weight: 400; }
+
+  .cat-select {
+    padding: 9px 8px;
+    border: 1.5px solid #E0DDD4;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    color: #4A5C3A;
+    background: #FDFBF7;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.15s;
+    max-width: 110px;
+  }
+  .cat-select:focus { border-color: #2D5A1B; }
+  .add-btn {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: #2D5A1B;
+    border: none; color: white; font-size: 20px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: background 0.15s;
+  }
+  .add-btn:active { background: #1E3E12; }
+
+  /* Grocery list */
+  .store-section { margin-bottom: 18px; }
+  .store-section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .store-section-icon { font-size: 18px; }
+  .store-section-title { font-family: 'Lora', serif; font-size: 15px; font-weight: 600; color: #1C2B0A; }
+  .store-section-line { flex: 1; height: 1px; background: #E5E0D5; }
+  .store-section-count { font-size: 11px; color: #9AAA8A; font-weight: 500; }
+
+  .grocery-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px; background: #fff;
+    border-radius: 12px; margin-bottom: 6px;
+    border: 1px solid #EBE7DC;
+    transition: opacity 0.2s; cursor: pointer; user-select: none;
+  }
+  .grocery-item.checked { opacity: 0.45; }
+  .grocery-item.checked .grocery-item-name { text-decoration: line-through; }
+  .check-circle {
+    width: 22px; height: 22px; border-radius: 50%;
+    border: 2px solid #C5BFAF;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all 0.15s; background: transparent;
+  }
+  .grocery-item.checked .check-circle { background: #2D5A1B; border-color: #2D5A1B; }
+  .check-tick { display: none; color: white; font-size: 12px; font-weight: 700; }
+  .grocery-item.checked .check-tick { display: block; }
+  .grocery-item-name { font-size: 14px; color: #2A3620; font-weight: 400; flex: 1; }
+  .grocery-item-source { font-size: 11px; color: #9AAA8A; }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: #9AAA8A; }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-title { font-family: 'Lora', serif; font-size: 16px; color: #7A8C6E; margin-bottom: 6px; }
+  .empty-sub { font-size: 13px; }
+
+  .bottom-bar { padding: 10px 24px 20px; background: #FAF7F0; border-top: 1px solid #EBE7DC; }
+  .clear-btn {
+    width: 100%; padding: 12px;
+    background: transparent; border: 1.5px solid #E0DDD4;
+    border-radius: 12px; font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 500; color: #9AAA8A;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .clear-btn:hover { border-color: #C4622D; color: #C4622D; }
+
+  .progress-bar-wrap {
+    height: 3px; background: #EBE7DC;
+    border-radius: 2px; margin: 0 24px 0;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%; background: #2D5A1B;
+    border-radius: 2px; transition: width 0.3s ease;
+  }
+
+  .home-indicator { height: 34px; display: flex; align-items: center; justify-content: center; background: #FAF7F0; }
+  .home-bar { width: 130px; height: 5px; background: #1C2B0A; border-radius: 3px; opacity: 0.2; }
+</style>
+</head>
+<body>
+<div class="phone-shell">
+  <div id="root"></div>
+</div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const CATEGORIES = [
+  { id: 'vegetables', label: 'Vegetables',        icon: '🥦', badgeClass: 'cat-vegetables' },
+  { id: 'meats',      label: 'Meats',              icon: '🥩', badgeClass: 'cat-meats' },
+  { id: 'dairy',      label: 'Fresh/Dairy',        icon: '🧀', badgeClass: 'cat-dairy' },
+  { id: 'dry',        label: 'Dry Foods',           icon: '🌾', badgeClass: 'cat-dry' },
+  { id: 'cleaning',   label: 'Cleaning & Others',  icon: '🧹', badgeClass: 'cat-cleaning' },
+];
+
+function getCat(id) { return CATEGORIES.find(c => c.id === id) || CATEGORIES[0]; }
+function genId() { return Math.random().toString(36).slice(2); }
+
+function useLocalStorage(key, initial) {
+  const [val, setVal] = useState(() => {
+    try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : initial; }
+    catch { return initial; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+  }, [key, val]);
+  return [val, setVal];
+}
+
+// ---- AddIngredientRow with autocomplete ----
+function AddIngredientRow({ onAdd, history }) {
+  const [name, setName]           = useState('');
+  const [cat, setCat]             = useState('vegetables');
+  const [showAuto, setShowAuto]   = useState(false);
+  const [hiIdx, setHiIdx]         = useState(-1);
+  const inputRef                  = useRef();
+  const wrapRef                   = useRef();
+
+  const suggestions = name.trim().length >= 1
+    ? history.filter(h => h.name.toLowerCase().includes(name.toLowerCase().trim()))
+    : [];
+
+  function pickSuggestion(s) {
+    setName(s.name);
+    setCat(s.category);
+    setShowAuto(false);
+    setHiIdx(-1);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  }
+
+  function submit(e) {
+    e && e.preventDefault();
+    if (hiIdx >= 0 && suggestions[hiIdx]) { pickSuggestion(suggestions[hiIdx]); return; }
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    onAdd({ id: genId(), name: trimmed, category: cat });
+    setName('');
+    setShowAuto(false);
+    setHiIdx(-1);
+    inputRef.current?.focus();
+  }
+
+  function handleKey(e) {
+    if (!showAuto || suggestions.length === 0) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); setHiIdx(i => Math.min(i + 1, suggestions.length - 1)); }
+    if (e.key === 'ArrowUp')   { e.preventDefault(); setHiIdx(i => Math.max(i - 1, -1)); }
+    if (e.key === 'Escape')    { setShowAuto(false); setHiIdx(-1); }
+  }
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handler(e) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setShowAuto(false);
+    }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <form className="add-row" onSubmit={submit}>
+      <div className="add-input-wrap" ref={wrapRef}>
+        <input
+          ref={inputRef}
+          className="add-input"
+          value={name}
+          onChange={e => { setName(e.target.value); setShowAuto(true); setHiIdx(-1); }}
+          onFocus={() => { if (name.trim()) setShowAuto(true); }}
+          onKeyDown={handleKey}
+          placeholder="Add ingredient…"
+          autoComplete="off"
+        />
+        {showAuto && suggestions.length > 0 && (
+          <div className="autocomplete-dropdown">
+            {suggestions.slice(0, 8).map((s, i) => (
+              <div
+                key={s.name + s.category}
+                className={`autocomplete-item${i === hiIdx ? ' highlighted' : ''}`}
+                onMouseDown={() => pickSuggestion(s)}
+              >
+                <span className="autocomplete-item-name">{s.name}</span>
+                <span className={`category-badge ${getCat(s.category).badgeClass}`}>{getCat(s.category).label}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      <select className="cat-select" value={cat} onChange={e => setCat(e.target.value)}>
+        {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+      </select>
+      <button type="submit" className="add-btn">+</button>
+    </form>
+  );
+}
+
+// ---- DaySection ----
+function DaySection({ label, items, isGeneral, onAdd, onDelete, history }) {
+  const [open, setOpen] = useState(isGeneral);
+  return (
+    <div className="day-section">
+      <div className="day-header" onClick={() => setOpen(o => !o)}>
+        <div className="day-header-left">
+          <div className={`day-dot${isGeneral ? ' general' : ''}`}></div>
+          <span className="day-name">{label}</span>
+          {items.length > 0 && <span className="day-count">{items.length}</span>}
+        </div>
+        <span className={`day-chevron${open ? ' open' : ''}`}>▼</span>
+      </div>
+      {open && (
+        <div className="day-body">
+          {items.map(item => (
+            <div className="ingredient-item" key={item.id}>
+              <div className="ingredient-info">
+                <span className="ingredient-name">{item.name}</span>
+                <span className={`category-badge ${getCat(item.category).badgeClass}`}>{getCat(item.category).label}</span>
+              </div>
+              <button className="delete-btn" type="button" onClick={() => onDelete(item.id)}>×</button>
+            </div>
+          ))}
+          <AddIngredientRow onAdd={onAdd} history={history} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---- MenuTab ----
+function MenuTab({ weekData, setWeekData, history }) {
+  function handleAdd(dayKey, item) {
+    setWeekData(prev => ({ ...prev, [dayKey]: [...(prev[dayKey] || []), item] }));
+  }
+  function handleDelete(dayKey, id) {
+    setWeekData(prev => ({ ...prev, [dayKey]: prev[dayKey].filter(i => i.id !== id) }));
+  }
+  const allSections = [
+    ...DAYS.map(d => ({ key: d, label: d, isGeneral: false })),
+    { key: 'general', label: 'General', isGeneral: true }
+  ];
+
+  return (
+    <div className="scroll-content">
+      {allSections.map(({ key, label, isGeneral }) => (
+        <DaySection
+          key={key}
+          label={label}
+          items={weekData[key] || []}
+          isGeneral={isGeneral}
+          onAdd={item => handleAdd(key, item)}
+          onDelete={id => handleDelete(key, id)}
+          history={history}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ---- GroceryTab ----
+function GroceryTab({ weekData, checked, setChecked }) {
+  const allKeys = [...DAYS, 'general'];
+  const allItems = [];
+  allKeys.forEach(key => {
+    (weekData[key] || []).forEach(item => {
+      allItems.push({ ...item, source: key === 'general' ? 'General' : key.slice(0,3) });
+    });
+  });
+  const seen = new Set();
+  const dedupedItems = [];
+  allItems.forEach(item => {
+    const k = item.name.toLowerCase() + '|' + item.category;
+    if (!seen.has(k)) { seen.add(k); dedupedItems.push(item); }
+  });
+
+  const total = dedupedItems.length;
+  const checkedCount = dedupedItems.filter(i => checked[i.id]).length;
+  const progress = total > 0 ? (checkedCount / total) * 100 : 0;
+
+  function toggleCheck(id) { setChecked(prev => ({ ...prev, [id]: !prev[id] })); }
+  function clearChecked() {
+    setChecked(prev => {
+      const next = { ...prev };
+      dedupedItems.forEach(i => { if (next[i.id]) delete next[i.id]; });
+      return next;
+    });
+  }
+
+  return (
+    <>
+      <div className="progress-bar-wrap" style={{ marginTop: 10 }}>
+        <div className="progress-bar-fill" style={{ width: `${progress}%` }}></div>
+      </div>
+      <div className="scroll-content" style={{ paddingTop: 10 }}>
+        {total === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">🛒</div>
+            <div className="empty-title">List is empty</div>
+            <div className="empty-sub">Add ingredients in the Menu tab to populate your list</div>
+          </div>
+        ) : (
+          CATEGORIES.map(cat => {
+            const catItems = dedupedItems.filter(i => i.category === cat.id);
+            if (catItems.length === 0) return null;
+            const catChecked = catItems.filter(i => checked[i.id]).length;
+            return (
+              <div className="store-section" key={cat.id}>
+                <div className="store-section-header">
+                  <span className="store-section-icon">{cat.icon}</span>
+                  <span className="store-section-title">{cat.label}</span>
+                  <div className="store-section-line"></div>
+                  <span className="store-section-count">{catChecked}/{catItems.length}</span>
+                </div>
+                {catItems.map(item => (
+                  <div
+                    key={item.id}
+                    className={`grocery-item${checked[item.id] ? ' checked' : ''}`}
+                    onClick={() => toggleCheck(item.id)}
+                  >
+                    <div className="check-circle"><span className="check-tick">✓</span></div>
+                    <span className="grocery-item-name">{item.name}</span>
+                    <span className="grocery-item-source">{item.source}</span>
+                  </div>
+                ))}
+              </div>
+            );
+          })
+        )}
+      </div>
+      {checkedCount > 0 && (
+        <div className="bottom-bar">
+          <button className="clear-btn" onClick={clearChecked}>
+            Clear {checkedCount} checked item{checkedCount !== 1 ? 's' : ''}
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ---- App ----
+function App() {
+  const [tab,          setTab]         = useState('menu');
+  // weeks: { [weekNum]: { Monday: [], ..., general: [] } }
+  const [weeks,        setWeeks]       = useLocalStorage('grocery-weeks', { 1: {} });
+  const [currentWeek,  setCurrentWeek] = useLocalStorage('grocery-current-week', 1);
+  const [checked,      setChecked]     = useLocalStorage('grocery-checked', {});
+  // history: flat list of { name, category } — all items ever added (deduplicated by name)
+  const [history,      setHistory]     = useLocalStorage('grocery-history', []);
+
+  const totalWeeks = Math.max(...Object.keys(weeks).map(Number));
+  const weekData   = weeks[currentWeek] || {};
+
+  function setWeekData(updater) {
+    setWeeks(prev => {
+      const current = prev[currentWeek] || {};
+      const next    = typeof updater === 'function' ? updater(current) : updater;
+      // Update history with any new items
+      const allNewItems = Object.values(next).flat();
+      setHistory(hist => {
+        let updated = [...hist];
+        allNewItems.forEach(item => {
+          const exists = updated.some(h => h.name.toLowerCase() === item.name.toLowerCase());
+          if (!exists) updated = [{ name: item.name, category: item.category }, ...updated];
+        });
+        return updated;
+      });
+      return { ...prev, [currentWeek]: next };
+    });
+  }
+
+  function addWeek() {
+    const newNum = totalWeeks + 1;
+    setWeeks(prev => ({ ...prev, [newNum]: {} }));
+    setCurrentWeek(newNum);
+    setTab('menu');
+  }
+
+  const allIngCount  = Object.values(weekData).flat().length;
+  const allItemIds   = new Set(Object.values(weekData).flat().map(i => i.id));
+  const uncheckedCount = [...allItemIds].filter(id => !checked[id]).length;
+
+  const now     = new Date();
+  const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '844px', background: '#FAF7F0' }}>
+      {/* Status bar */}
+      <div className="status-bar">
+        <span>{timeStr}</span>
+        <div className="notch"></div>
+        <div className="status-icons">
+          <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
+            <rect x="0" y="4" width="3" height="8" rx="1" fill="#1C2B0A"/>
+            <rect x="4.5" y="2.5" width="3" height="9.5" rx="1" fill="#1C2B0A"/>
+            <rect x="9" y="0" width="3" height="12" rx="1" fill="#1C2B0A"/>
+            <rect x="13.5" y="0" width="2.5" height="12" rx="1" fill="#1C2B0A" opacity="0.3"/>
+          </svg>
+          <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
+            <path d="M8 2.5C10.5 2.5 12.7 3.7 14.1 5.5L15.5 4C13.7 1.7 11 0.3 8 0.3C5 0.3 2.3 1.7 0.5 4L1.9 5.5C3.3 3.7 5.5 2.5 8 2.5Z" fill="#1C2B0A"/>
+            <path d="M8 6C9.5 6 10.8 6.7 11.7 7.8L13.1 6.3C11.8 4.8 10 3.9 8 3.9C6 3.9 4.2 4.8 2.9 6.3L4.3 7.8C5.2 6.7 6.5 6 8 6Z" fill="#1C2B0A"/>
+            <circle cx="8" cy="10.5" r="1.5" fill="#1C2B0A"/>
+          </svg>
+          <svg width="25" height="12" viewBox="0 0 25 12" fill="none">
+            <rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="#1C2B0A" strokeOpacity="0.35"/>
+            <rect x="2" y="2" width="15" height="8" rx="2" fill="#1C2B0A"/>
+            <path d="M23 4v4a2 2 0 000-4z" fill="#1C2B0A" fillOpacity="0.4"/>
+          </svg>
+        </div>
+      </div>
+
+      <div className="app">
+        <div className="app-header">
+          <h1>Smart Grocery</h1>
+          <div className="subtitle">
+            {tab === 'menu'
+              ? `${allIngCount} ingredient${allIngCount !== 1 ? 's' : ''} planned`
+              : `${uncheckedCount} item${uncheckedCount !== 1 ? 's' : ''} left to get`}
+          </div>
+        </div>
+
+        {/* Week selector */}
+        <div className="week-selector">
+          <span className="week-label">Week {currentWeek}</span>
+          <div className="week-nav-btns">
+            <button
+              className="week-nav-btn"
+              onClick={() => setCurrentWeek(w => Math.max(1, w - 1))}
+              disabled={currentWeek <= 1}
+            >‹</button>
+            <button
+              className="week-nav-btn"
+              onClick={() => setCurrentWeek(w => Math.min(totalWeeks, w + 1))}
+              disabled={currentWeek >= totalWeeks}
+            >›</button>
+            <button className="week-add-btn" onClick={addWeek} title="Nieuwe week">+</button>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div style={{ padding: '10px 24px 0' }}>
+          <div className="tab-bar">
+            <button className={`tab-btn${tab === 'menu' ? ' active' : ''}`} onClick={() => setTab('menu')}>
+              📅 Weekly Menu
+            </button>
+            <button className={`tab-btn${tab === 'grocery' ? ' active' : ''}`} onClick={() => setTab('grocery')}>
+              🛒 Grocery List
+            </button>
+          </div>
+        </div>
+
+        {tab === 'menu'
+          ? <MenuTab weekData={weekData} setWeekData={setWeekData} history={history} />
+          : <GroceryTab weekData={weekData} checked={checked} setChecked={setChecked} />
+        }
+      </div>
+
+      <div className="home-indicator"><div className="home-bar"></div></div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
