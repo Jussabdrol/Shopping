@@ -1,8 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import type { CategoryId } from "@/lib/constants";
+import { useEffect, useRef, useState, useTransition } from "react";
+import type { InitialAppData } from "@/lib/data/pgApi";
 import type {
   Checked,
   HistoryItem,
@@ -10,49 +9,74 @@ import type {
   WeekData,
   Weeks,
 } from "@/lib/types";
-import * as api from "@/lib/data/supabaseApi";
-import { migrateLocalToSupabase } from "@/lib/data/migrate";
+import type { CategoryId } from "@/lib/constants";
+import {
+  addIngredientAction,
+  clearCheckedAction,
+  createWeekAction,
+  deleteIngredientAction,
+  migrateLocalDataAction,
+  toggleCheckedAction,
+} from "@/app/actions/data";
+import {
+  collectLocalData,
+  hasLocalData,
+  markMigrated,
+} from "@/lib/data/localMigration";
 import { AppView } from "./AppView";
 
 type Props = {
-  userId: string;
-  userEmail: string | null;
+  initial: InitialAppData;
 };
 
-export function SupabaseAppShell({ userId, userEmail }: Props) {
-  const [supabase] = useState(() => createClient());
-  const [loading, setLoading] = useState(true);
+export function RemoteAppShell({ initial }: Props) {
+  const [weeks, setWeeks] = useState<Weeks>(
+    Object.keys(initial.weeks).length > 0 ? initial.weeks : { 1: {} }
+  );
+  const [weekIdByNum, setWeekIdByNum] = useState<Record<number, string>>(
+    initial.weekIdByNum
+  );
+  const [currentWeek, setCurrentWeek] = useState<number>(initial.currentWeek);
+  const [checked, setChecked] = useState<Checked>(initial.checked);
+  const [history, setHistory] = useState<HistoryItem[]>(initial.history);
   const [error, setError] = useState<string | null>(null);
-
-  const [weeks, setWeeks] = useState<Weeks>({ 1: {} });
-  const [weekIdByNum, setWeekIdByNum] = useState<Record<number, string>>({});
-  const [currentWeek, setCurrentWeek] = useState<number>(1);
-  const [checked, setChecked] = useState<Checked>({});
-  const [history, setHistory] = useState<HistoryItem[]>([]);
-
-  const reload = useCallback(async () => {
-    try {
-      await migrateLocalToSupabase(supabase, userId);
-      const data = await api.loadAll(supabase, userId);
-      setWeeks(data.weeks);
-      setWeekIdByNum(data.weekIdByNum);
-      setCurrentWeek((prev) => (data.weeks[prev] ? prev : data.currentWeek));
-      setChecked(data.checked);
-      setHistory(data.history);
-      setLoading(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-      setLoading(false);
-    }
-  }, [supabase, userId]);
+  const [, startTransition] = useTransition();
+  const migrationTriedRef = useRef(false);
 
   useEffect(() => {
-    void reload();
-  }, [reload]);
+    if (migrationTriedRef.current) return;
+    migrationTriedRef.current = true;
+    if (!hasLocalData()) return;
+    const payload = collectLocalData();
+    (async () => {
+      try {
+        await migrateLocalDataAction(payload);
+        markMigrated();
+        window.location.reload();
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? `Migratie mislukt: ${err.message}`
+            : "Migratie mislukt."
+        );
+      }
+    })();
+  }, []);
+
+  function run<T>(fn: () => Promise<T>) {
+    startTransition(async () => {
+      try {
+        await fn();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
+      }
+    });
+  }
 
   async function handleAddIngredient(dayKey: string, optimistic: Ingredient) {
     const weekId = weekIdByNum[currentWeek];
     if (!weekId) return;
+
     setWeeks((prev) => {
       const wd: WeekData = prev[currentWeek] ?? {};
       return {
@@ -69,8 +93,8 @@ export function SupabaseAppShell({ userId, userEmail }: Props) {
         : [{ name: optimistic.name, category: optimistic.category }, ...prev]
     );
 
-    try {
-      const saved = await api.addIngredient(supabase, {
+    run(async () => {
+      const saved = await addIngredientAction({
         weekId,
         dayKey,
         name: optimistic.name,
@@ -88,17 +112,10 @@ export function SupabaseAppShell({ userId, userEmail }: Props) {
           },
         };
       });
-      await api.recordHistory(supabase, userId, {
-        name: saved.name,
-        category: saved.category,
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-      await reload();
-    }
+    });
   }
 
-  async function handleDeleteIngredient(dayKey: string, id: string) {
+  function handleDeleteIngredient(dayKey: string, id: string) {
     setWeeks((prev) => {
       const wd: WeekData = prev[currentWeek] ?? {};
       return {
@@ -109,37 +126,28 @@ export function SupabaseAppShell({ userId, userEmail }: Props) {
         },
       };
     });
-    try {
-      await api.deleteIngredient(supabase, id);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-      await reload();
-    }
+    setChecked((prev) => {
+      if (!prev[id]) return prev;
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+    run(() => deleteIngredientAction(id));
   }
 
-  async function handleToggleChecked(id: string) {
+  function handleToggleChecked(id: string) {
     const nextChecked = !checked[id];
     setChecked((prev) => ({ ...prev, [id]: nextChecked }));
-    try {
-      await api.upsertChecked(supabase, userId, id, nextChecked);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-      await reload();
-    }
+    run(() => toggleCheckedAction(id, nextChecked));
   }
 
-  async function handleClearChecked(ids: string[]) {
+  function handleClearChecked(ids: string[]) {
     setChecked((prev) => {
       const next = { ...prev };
       ids.forEach((id) => delete next[id]);
       return next;
     });
-    try {
-      await api.clearChecked(supabase, userId, ids);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-      await reload();
-    }
+    run(() => clearCheckedAction(ids));
   }
 
   function handlePrevWeek() {
@@ -152,18 +160,15 @@ export function SupabaseAppShell({ userId, userEmail }: Props) {
     setCurrentWeek((w) => Math.min(totalWeeks, w + 1));
   }
 
-  async function handleAddWeek() {
+  function handleAddWeek() {
     const weekNums = Object.keys(weeks).map(Number);
     const newNum = (weekNums.length > 0 ? Math.max(...weekNums) : 0) + 1;
     setWeeks((prev) => ({ ...prev, [newNum]: {} }));
     setCurrentWeek(newNum);
-    try {
-      const id = await api.createWeek(supabase, userId, newNum);
+    run(async () => {
+      const id = await createWeekAction(newNum);
       setWeekIdByNum((prev) => ({ ...prev, [newNum]: id }));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-      await reload();
-    }
+    });
   }
 
   async function handleSignOut() {
@@ -171,25 +176,12 @@ export function SupabaseAppShell({ userId, userEmail }: Props) {
     window.location.href = "/login";
   }
 
-  if (loading) {
-    return (
-      <div className="app">
-        <div className="app-header">
-          <h1>Slim Boodschappen</h1>
-          <div className="subtitle">Laden…</div>
-        </div>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="app">
         <div className="app-header">
           <h1>Slim Boodschappen</h1>
-          <div className="subtitle" style={{ color: "#C4622D" }}>
-            {error}
-          </div>
+          <div className="subtitle" style={{ color: "#C4622D" }}>{error}</div>
         </div>
       </div>
     );
@@ -201,7 +193,7 @@ export function SupabaseAppShell({ userId, userEmail }: Props) {
       currentWeek={currentWeek}
       checked={checked}
       history={history}
-      userEmail={userEmail}
+      userEmail="ingelogd"
       onSignOut={handleSignOut}
       onAddIngredient={handleAddIngredient}
       onDeleteIngredient={handleDeleteIngredient}

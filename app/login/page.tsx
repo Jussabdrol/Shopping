@@ -1,80 +1,39 @@
 "use client";
 
-import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { getSupabaseEnv } from "@/lib/supabase/env";
+import { useFormState, useFormStatus } from "react-dom";
+import { loginAction, type LoginState } from "@/app/actions/auth";
+
+const initialState: LoginState = {};
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button type="submit" className="login-submit" disabled={pending}>
+      {pending ? "Even geduld…" : "Inloggen"}
+    </button>
+  );
+}
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  const { configured } = getSupabaseEnv();
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!email.trim()) return;
-    setStatus("sending");
-    setErrorMsg(null);
-    try {
-      const supabase = createClient();
-      const origin = window.location.origin;
-      const { error } = await supabase.auth.signInWithOtp({
-        email: email.trim(),
-        options: { emailRedirectTo: `${origin}/auth/callback` },
-      });
-      if (error) throw error;
-      setStatus("sent");
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Er ging iets mis.";
-      setErrorMsg(msg);
-      setStatus("error");
-    }
-  }
-
-  if (!configured) {
-    return (
-      <div className="login-card">
-        <h1>Slim Boodschappen</h1>
-        <p>
-          Supabase is nog niet geconfigureerd. Stel{" "}
-          <code>NEXT_PUBLIC_SUPABASE_URL</code> en{" "}
-          <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> in om in te loggen.
-        </p>
-      </div>
-    );
-  }
+  const [state, formAction] = useFormState(loginAction, initialState);
 
   return (
     <div className="login-card">
       <h1>Slim Boodschappen</h1>
-      <p>Log in met je e-mail om je weekmenu en boodschappenlijst op te slaan.</p>
-      <form className="login-form" onSubmit={handleSubmit}>
+      <p>Voer het wachtwoord in om je weekmenu en boodschappenlijst te openen.</p>
+      <form className="login-form" action={formAction}>
         <input
           className="add-input"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="naam@voorbeeld.nl"
+          type="password"
+          name="password"
+          placeholder="Wachtwoord"
           required
-          autoComplete="email"
+          autoComplete="current-password"
+          autoFocus
         />
-        <button
-          type="submit"
-          className="login-submit"
-          disabled={status === "sending" || status === "sent"}
-        >
-          {status === "sending" ? "Even geduld…" : "Stuur inloglink"}
-        </button>
+        <SubmitButton />
       </form>
-      {status === "sent" && (
-        <div className="login-message">
-          Check je inbox — we hebben je een inloglink gestuurd.
-        </div>
-      )}
-      {status === "error" && errorMsg && (
-        <div className="login-error">{errorMsg}</div>
-      )}
+      {state.error && <div className="login-error">{state.error}</div>}
     </div>
   );
 }
