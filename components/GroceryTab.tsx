@@ -20,14 +20,21 @@ export function GroceryTab({ weekData, checked, onToggle, onClearChecked }: Prop
     });
   });
 
-  const seen = new Set<string>();
+  const seen = new Map<string, SourcedIngredient>();
+  const counts = new Map<string, number>();
   const dedupedItems: SourcedIngredient[] = [];
   allItems.forEach((item) => {
     const k = item.name.toLowerCase() + "|" + item.category;
+    counts.set(k, (counts.get(k) ?? 0) + 1);
     if (!seen.has(k)) {
-      seen.add(k);
+      seen.set(k, item);
       dedupedItems.push(item);
     }
+  });
+  dedupedItems.forEach((item) => {
+    const k = item.name.toLowerCase() + "|" + item.category;
+    const count = counts.get(k) ?? 1;
+    if (count > 1) item.source = `${count} x`;
   });
 
   const total = dedupedItems.length;
