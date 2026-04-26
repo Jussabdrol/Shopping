@@ -28,6 +28,7 @@ export type CategoryId =
   | "meats"
   | "dairy"
   | "dry"
+  | "freezer"
   | "cleaning";
 
 export type Category = {
@@ -42,6 +43,7 @@ export const CATEGORIES: Category[] = [
   { id: "meats", label: "Vlees", icon: "🥩", badgeClass: "cat-meats" },
   { id: "dairy", label: "Vers/Zuivel", icon: "🧀", badgeClass: "cat-dairy" },
   { id: "dry", label: "Droge voeding", icon: "🌾", badgeClass: "cat-dry" },
+  { id: "freezer", label: "Vriezer", icon: "🧊", badgeClass: "cat-freezer" },
   { id: "cleaning", label: "Schoonmaak & overig", icon: "🧹", badgeClass: "cat-cleaning" },
 ];
 
