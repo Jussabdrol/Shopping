@@ -1,142 +1,161 @@
-# Deployment guide — Railway + Supabase
+# Deployment guide — Railway only
 
-This app is a Next.js 14 (App Router) project that uses Supabase for
-auth + persistence and runs on Railway.
+Everything runs on Railway:
 
-- Code lives at the repo root.
-- Database schema: `supabase/schema.sql`.
-- Railway build config: `railway.toml` + `nixpacks.toml`.
+- A **Postgres** service (managed by Railway) holds the data.
+- A **web** service runs the Next.js app.
+- Auth is a single shared password. No external email provider is
+  required.
+
+Required env vars on the web service:
+
+| Var | Source |
+|---|---|
+| `DATABASE_URL` | Reference the Postgres plugin — auto-generated |
+| `APP_PASSWORD` | You pick it. Users type this to log in |
+| `SESSION_SECRET` | Random 32+ char string. Signs session cookies |
+
+The app auto-creates its tables on first query (idempotent — it just
+runs `db/schema.sql`), so you normally do **not** need to log into
+psql. The SQL file is still there if you want to run it manually or
+inspect it.
 
 ---
 
-## 1. Create the Supabase project
+## 1. Push the code to GitHub
 
-1. Sign in at [supabase.com](https://supabase.com) → **New project**.
-2. Pick a region close to your users, set a strong DB password, wait
-   for the project to provision.
-3. In the dashboard, open **Settings → API** and copy:
-   - **Project URL** → this becomes `NEXT_PUBLIC_SUPABASE_URL`
-   - **anon / public key** → this becomes `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+This branch (`claude/build-from-design-specs-cMUEh`) is already pushed
+to `origin`. If you want to deploy from `main` instead, merge first.
 
-## 2. Create the tables
+## 2. Create the Railway project
 
-1. Open **SQL Editor** in the Supabase dashboard.
-2. Paste the contents of [`supabase/schema.sql`](./supabase/schema.sql)
-   and run it. This creates:
-   - `weeks`, `ingredients`, `checked_items`, `ingredient_history`
-   - Indexes and row-level security policies scoped to `auth.uid()`
+1. Go to [railway.com/new](https://railway.com/new) → **Deploy from GitHub repo** → pick this repo.
+2. Pick the branch you want to deploy from. Railway will start a
+   first build using `nixpacks.toml` + `railway.toml`
+   (`npm ci → npm run build → npm start`).
+3. Let the first build finish (it will fail healthcheck without env
+   vars — that's fine, we'll fix it next).
 
-## 3. Configure magic-link auth
+## 3. Add the Postgres database
 
-1. Go to **Authentication → Providers** and make sure **Email** is enabled.
-2. Go to **Authentication → URL configuration**:
-   - **Site URL**: your Railway URL once it's deployed (for example
-     `https://slim-boodschappen.up.railway.app`). While you're still
-     developing locally you can use `http://localhost:3000`.
-   - **Additional redirect URLs**: add `${SITE_URL}/auth/callback`
-     (and the localhost equivalent for dev). The app uses this route
-     to exchange the magic-link code for a session.
+1. In the project dashboard: **+ Create → Database → Add PostgreSQL**.
+2. Railway provisions a Postgres service and exposes a set of vars
+   including `DATABASE_URL`.
 
-## 4. Run locally
+## 4. Wire the database into the web service
+
+1. Open your **web service → Variables → + New Variable → Add Reference**.
+2. Pick the Postgres service and select `DATABASE_URL`. Railway
+   stores it as a reference so it always resolves to the current
+   credentials.
+3. On the same Variables tab, add:
+   - `APP_PASSWORD` → whatever password you want to share with
+     anyone who should be able to use the app.
+   - `SESSION_SECRET` → generate one:
+     ```bash
+     openssl rand -hex 32
+     ```
+     Paste the output as the value.
+
+## 5. Redeploy
+
+Click **Deploy** on the web service (or push a new commit). During
+the first request the app runs `db/schema.sql` against the new
+Postgres service, creating `weeks`, `ingredients`, `checked_items`,
+and `ingredient_history`.
+
+## 6. Get a URL and try it
+
+1. **Settings → Networking → Generate domain** on the web service
+   gives you something like `slim-boodschappen.up.railway.app`.
+2. Open it. You get redirected to `/login`.
+3. Enter `APP_PASSWORD`. You're in.
+
+### Optional: custom domain
+
+**Settings → Networking → Custom domain** → point a CNAME at the
+target Railway provides. HTTPS is handled for you.
+
+---
+
+## Local development
 
 ```bash
 cp .env.example .env.local
-# Fill in NEXT_PUBLIC_SUPABASE_URL + NEXT_PUBLIC_SUPABASE_ANON_KEY
+# Fill in:
+#   DATABASE_URL      (any Postgres — local Docker is fine)
+#   APP_PASSWORD
+#   SESSION_SECRET
 npm install
 npm run dev
 # → http://localhost:3000
 ```
 
-If you start the dev server without env vars, the app still runs — it
-falls back to the localStorage-only mode and skips the login flow.
-
-## 5. Push to GitHub
-
-This repo is already a git repository. Push the current branch to
-GitHub so Railway can pick it up:
+Quick local Postgres via Docker:
 
 ```bash
-git push -u origin claude/build-from-design-specs-cMUEh
+docker run --rm -d --name slim-pg \
+  -e POSTGRES_PASSWORD=dev \
+  -e POSTGRES_DB=slim \
+  -p 5432:5432 postgres:16
+# Then DATABASE_URL=postgresql://postgres:dev@localhost:5432/slim
 ```
 
-(Or merge into `main`/`demo` first and deploy from there — Railway
-just needs a branch to track.)
-
-## 6. Deploy on Railway
-
-1. Go to [railway.app](https://railway.app) → **New Project →
-   Deploy from GitHub repo** and pick your repo and branch.
-2. Railway detects `nixpacks.toml` / `railway.toml` and uses
-   `npm ci → npm run build → npm start`.
-3. Open the new service → **Variables** and add:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-4. Hit **Deploy**. When it's live, open **Settings → Networking →
-   Generate domain** to get a public URL (e.g.
-   `slim-boodschappen.up.railway.app`).
-5. Go back to Supabase → **Authentication → URL configuration** and
-   update the Site URL + redirect URL to that Railway domain.
-
-## 7. Custom domain (optional)
-
-Railway: **Settings → Networking → Custom domain** — point a CNAME at
-the target Railway provides. Then update the Supabase redirect URL
-one more time.
+If you leave all three vars unset the app runs in **local mode** —
+no login, data is held in `localStorage`. Useful for demos. On the
+first authenticated load after adding the vars, any existing local
+data is uploaded to Postgres and the local keys are cleared.
 
 ---
 
-## Environment variables
+## Manual schema apply (optional)
 
-| Key | Required | Used where |
-|---|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | yes (to enable auth) | browser + server Supabase clients |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes (to enable auth) | browser + server Supabase clients |
-| `PORT` | no | injected by Railway; `npm start` reads it |
+If you want to run `db/schema.sql` yourself instead of relying on the
+bootstrap:
 
-If both Supabase vars are missing the app runs in localStorage-only
-mode. That's useful for demos but state isn't shared between devices.
+1. Railway dashboard → Postgres service → **Data** → open the SQL
+   console.
+2. Paste the contents of `db/schema.sql` and run it.
+
+Or from your laptop, grab the external `DATABASE_URL` from Railway
+(Postgres service → **Connect → Public Network**) and:
+
+```bash
+psql "$DATABASE_URL" -f db/schema.sql
+```
 
 ---
 
-## What happens on first login
+## How auth works
 
-When a user signs in for the first time, `lib/data/migrate.ts`:
+- `lib/auth.ts` signs a 30-day HS256 JWT and stores it in a
+  `HttpOnly` `Secure` (in production) `SameSite=Lax` cookie named
+  `slim_session`.
+- `middleware.ts` verifies that cookie on every non-auth request.
+  Missing/expired → redirect to `/login`.
+- `loginAction` (a Next.js server action) does a timing-safe
+  comparison against `APP_PASSWORD` and sets the cookie.
+- `POST /auth/signout` clears the cookie.
+- All server actions in `app/actions/data.ts` call `requireAuth()`
+  before touching the database, so a leaked client build cannot
+  bypass the password.
 
-1. Reads `grocery-weeks` / `grocery-history` from `localStorage`.
-2. Uploads anything it finds into `weeks`, `ingredients`, and
-   `ingredient_history` scoped to the signed-in user.
-3. Clears the local keys and sets `grocery-migrated-to-supabase=1`
-   so the migration only ever runs once.
+## Rotating secrets
 
-## Architecture summary
+- **Change the password**: update `APP_PASSWORD` in Railway and
+  redeploy. Existing logged-in sessions keep working until their JWTs
+  expire, because they were signed with `SESSION_SECRET`, not the
+  password.
+- **Invalidate all sessions**: rotate `SESSION_SECRET` (generate a
+  new `openssl rand -hex 32`). Everyone has to log in again.
 
-```
-app/
-  layout.tsx            # fonts, global shell
-  page.tsx              # server component: picks AppShell vs SupabaseAppShell
-  login/page.tsx        # magic-link form
-  auth/callback/route.ts# exchanges OTP code for a session cookie
-  auth/signout/route.ts # signs the user out
+---
 
-components/
-  AppView.tsx           # pure presentation (used by both containers)
-  AppShell.tsx          # localStorage container
-  SupabaseAppShell.tsx  # Supabase container with optimistic mutations
-  WeekSelector.tsx
-  MenuTab.tsx / DaySection.tsx / AddIngredientRow.tsx
-  GroceryTab.tsx
+## Troubleshooting
 
-lib/
-  constants.ts          # Dutch day + category labels, badge classes
-  types.ts
-  useLocalStorage.ts
-  supabase/
-    env.ts client.ts server.ts middleware.ts
-  data/
-    supabaseApi.ts      # CRUD against Supabase
-    migrate.ts          # localStorage → Supabase migration
-
-middleware.ts           # refreshes the Supabase session on every request
-supabase/schema.sql     # run once in the Supabase SQL editor
-railway.toml / nixpacks.toml
-```
+| Symptom | Likely cause |
+|---|---|
+| Stuck on `/login` with no error | `APP_PASSWORD` not set on the web service |
+| `Error: DATABASE_URL is not configured` | Missing reference from web → Postgres service |
+| `relation "weeks" does not exist` on first request | Bootstrap failed — the Postgres user needs rights to `CREATE EXTENSION pgcrypto`. Railway Postgres has this by default; if you're self-hosting, run `db/schema.sql` manually as superuser |
+| Login redirects in a loop | `SESSION_SECRET` changed between the request and the cookie, or cookies are blocked. Clear cookies and try again |

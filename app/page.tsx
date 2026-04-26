@@ -1,26 +1,21 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
-import { SupabaseAppShell } from "@/components/SupabaseAppShell";
-import { getSupabaseEnv } from "@/lib/supabase/env";
-import { createClient } from "@/lib/supabase/server";
+import { RemoteAppShell } from "@/components/RemoteAppShell";
+import { getAuthMode, getSessionFromCookies } from "@/lib/auth";
+import { loadAll } from "@/lib/data/pgApi";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const { configured } = getSupabaseEnv();
-
-  if (!configured) {
+  if (getAuthMode() === "local") {
     return <AppShell />;
   }
 
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+  const authenticated = await getSessionFromCookies();
+  if (!authenticated) {
     redirect("/login");
   }
 
-  return <SupabaseAppShell userId={user.id} userEmail={user.email ?? null} />;
+  const initial = await loadAll();
+  return <RemoteAppShell initial={initial} />;
 }

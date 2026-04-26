@@ -2,25 +2,26 @@
 
 A Dutch-language mobile web app for planning weekly menus and
 generating a grocery checklist sorted by store section. Built with
-Next.js 14 (App Router), Supabase for auth + persistence, and Railway
-for hosting.
+Next.js 14 (App Router), Postgres, and deployed end-to-end on
+Railway.
 
 - **Deploy**: see [`DEPLOYMENT.md`](./DEPLOYMENT.md)
-- **Original design spec + tokens**: see the **Design tokens** section below
+- **Design tokens**: see below
 - **Hi-fi HTML prototype**: [`Grocery App.html`](./Grocery%20App.html) (reference only)
 
 ## Run locally
 
 ```bash
-cp .env.example .env.local   # fill in Supabase keys (optional)
+cp .env.example .env.local
+# Fill in DATABASE_URL, APP_PASSWORD, SESSION_SECRET
 npm install
 npm run dev                  # → http://localhost:3000
 ```
 
-Without Supabase env vars the app runs in localStorage-only mode so
-you can click through the full UI without setting up a backend. With
-them set, users sign in via magic link and data syncs to Supabase —
-local data is migrated on first login.
+Leave those env vars unset and the app falls back to a localStorage-
+only demo mode (no login, no database). When you wire them up, the
+app applies `db/schema.sql` on first query and any existing local
+data is uploaded once and then cleared.
 
 ## Scripts
 
@@ -37,8 +38,8 @@ local data is migrated on first login.
 |---|---|
 | Framework | Next.js 14 App Router (TypeScript) |
 | Styling | Tailwind + hand-written CSS that ports the design tokens |
-| Auth | Supabase magic-link |
-| DB | Supabase Postgres with row-level security |
+| Auth | Shared `APP_PASSWORD` + signed session cookie (`jose` HS256) |
+| DB | Railway Postgres via `pg` |
 | Hosting | Railway (Nixpacks) |
 
 ## Features
@@ -46,7 +47,7 @@ local data is migrated on first login.
 - **Weekmenu tab**: collapsible day sections (Maandag → Zondag + Algemeen), add ingredients with a category badge, autocomplete from history
 - **Boodschappenlijst tab**: items grouped by store section (Groenten, Vlees, Vers/Zuivel, Droge voeding, Schoonmaak & overig), progress bar, deduplication, per-item check + bulk clear
 - **Multi-week**: `‹` / `›` to navigate, `+` to create a new week
-- **Offline-friendly**: works without any backend config via localStorage, with one-shot migration into Supabase on first login
+- **Offline-friendly**: works without any backend config via localStorage, with one-shot migration into Postgres on first login
 
 ---
 
@@ -132,6 +133,6 @@ type Checked = { [ingredientId: string]: boolean };
 type HistoryItem = { name: string; category: string };
 ```
 
-Local-only keys (used when Supabase is not configured or before first
-login): `grocery-weeks`, `grocery-current-week`, `grocery-checked`,
-`grocery-history`, and `grocery-migrated-to-supabase`.
+Local-only keys (used when the database is not configured or before
+first login): `grocery-weeks`, `grocery-current-week`,
+`grocery-checked`, `grocery-history`, and `grocery-migrated-to-remote`.
