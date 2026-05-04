@@ -28,6 +28,13 @@ create table if not exists checked_items (
   created_at    timestamptz default now()
 );
 
+create table if not exists checked_days (
+  week_id    uuid references weeks(id) on delete cascade not null,
+  day_key    text not null,
+  created_at timestamptz default now(),
+  primary key (week_id, day_key)
+);
+
 create table if not exists ingredient_history (
   id         uuid primary key default gen_random_uuid(),
   name       text not null unique,

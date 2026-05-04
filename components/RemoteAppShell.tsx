@@ -4,12 +4,13 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import type { InitialAppData } from "@/lib/data/pgApi";
 import type {
   Checked,
+  DayChecked,
   HistoryItem,
   Ingredient,
   WeekData,
   Weeks,
 } from "@/lib/types";
-import type { CategoryId } from "@/lib/constants";
+import type { CategoryId, DayKey } from "@/lib/constants";
 import {
   addIngredientAction,
   clearCheckedAction,
@@ -17,6 +18,7 @@ import {
   deleteIngredientAction,
   migrateLocalDataAction,
   toggleCheckedAction,
+  toggleDayCheckedAction,
 } from "@/app/actions/data";
 import {
   collectLocalData,
@@ -38,6 +40,7 @@ export function RemoteAppShell({ initial }: Props) {
   );
   const [currentWeek, setCurrentWeek] = useState<number>(initial.currentWeek);
   const [checked, setChecked] = useState<Checked>(initial.checked);
+  const [checkedDays, setCheckedDays] = useState<DayChecked>(initial.checkedDays);
   const [history, setHistory] = useState<HistoryItem[]>(initial.history);
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
@@ -150,6 +153,21 @@ export function RemoteAppShell({ initial }: Props) {
     run(() => clearCheckedAction(ids));
   }
 
+  function handleToggleDayChecked(dayKey: DayKey) {
+    const weekId = weekIdByNum[currentWeek];
+    if (!weekId) return;
+    const isOn = Boolean(checkedDays[currentWeek]?.[dayKey]);
+    const next = !isOn;
+    setCheckedDays((prev) => {
+      const wk = prev[currentWeek] ?? {};
+      const nextWk: Partial<Record<DayKey, boolean>> = { ...wk };
+      if (next) nextWk[dayKey] = true;
+      else delete nextWk[dayKey];
+      return { ...prev, [currentWeek]: nextWk };
+    });
+    run(() => toggleDayCheckedAction(weekId, dayKey, next));
+  }
+
   function handlePrevWeek() {
     setCurrentWeek((w) => Math.max(1, w - 1));
   }
@@ -192,6 +210,7 @@ export function RemoteAppShell({ initial }: Props) {
       weeks={weeks}
       currentWeek={currentWeek}
       checked={checked}
+      checkedDays={checkedDays}
       history={history}
       userEmail="ingelogd"
       onSignOut={handleSignOut}
@@ -199,6 +218,7 @@ export function RemoteAppShell({ initial }: Props) {
       onDeleteIngredient={handleDeleteIngredient}
       onToggleChecked={handleToggleChecked}
       onClearChecked={handleClearChecked}
+      onToggleDayChecked={handleToggleDayChecked}
       onPrevWeek={handlePrevWeek}
       onNextWeek={handleNextWeek}
       onAddWeek={handleAddWeek}

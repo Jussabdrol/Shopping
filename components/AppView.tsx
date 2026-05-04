@@ -3,11 +3,13 @@
 import { useMemo, useState } from "react";
 import type {
   Checked,
+  DayChecked,
   HistoryItem,
   Ingredient,
   WeekData,
   Weeks,
 } from "@/lib/types";
+import type { DayKey } from "@/lib/constants";
 import { MenuTab } from "./MenuTab";
 import { GroceryTab } from "./GroceryTab";
 import { WeekSelector } from "./WeekSelector";
@@ -18,6 +20,7 @@ export type AppViewProps = {
   weeks: Weeks;
   currentWeek: number;
   checked: Checked;
+  checkedDays: DayChecked;
   history: HistoryItem[];
   userEmail?: string | null;
   onSignOut?: () => void;
@@ -25,6 +28,7 @@ export type AppViewProps = {
   onDeleteIngredient: (dayKey: string, id: string) => void;
   onToggleChecked: (id: string) => void;
   onClearChecked: (ids: string[]) => void;
+  onToggleDayChecked: (dayKey: DayKey) => void;
   onPrevWeek: () => void;
   onNextWeek: () => void;
   onAddWeek: () => void;
@@ -34,6 +38,7 @@ export function AppView({
   weeks,
   currentWeek,
   checked,
+  checkedDays,
   history,
   userEmail,
   onSignOut,
@@ -41,6 +46,7 @@ export function AppView({
   onDeleteIngredient,
   onToggleChecked,
   onClearChecked,
+  onToggleDayChecked,
   onPrevWeek,
   onNextWeek,
   onAddWeek,
@@ -107,8 +113,10 @@ export function AppView({
       {tab === "menu" ? (
         <MenuTab
           weekData={weekData}
+          checkedDays={checkedDays[currentWeek] ?? {}}
           onAdd={onAddIngredient}
           onDelete={onDeleteIngredient}
+          onToggleDayChecked={onToggleDayChecked}
           history={history}
         />
       ) : (

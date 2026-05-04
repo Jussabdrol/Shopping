@@ -3,11 +3,13 @@
 import { useLocalStorage } from "@/lib/useLocalStorage";
 import type {
   Checked,
+  DayChecked,
   HistoryItem,
   Ingredient,
   WeekData,
   Weeks,
 } from "@/lib/types";
+import type { DayKey } from "@/lib/constants";
 import { AppView } from "./AppView";
 
 export function AppShell() {
@@ -17,6 +19,10 @@ export function AppShell() {
     1
   );
   const [checked, setChecked] = useLocalStorage<Checked>("grocery-checked", {});
+  const [checkedDays, setCheckedDays] = useLocalStorage<DayChecked>(
+    "grocery-day-checked",
+    {}
+  );
   const [history, setHistory] = useLocalStorage<HistoryItem[]>(
     "grocery-history",
     []
@@ -45,6 +51,7 @@ export function AppShell() {
       weeks={weeks}
       currentWeek={currentWeek}
       checked={checked}
+      checkedDays={checkedDays}
       history={history}
       onAddIngredient={(dayKey, item) => {
         mutateWeek((prev) => ({
@@ -69,6 +76,16 @@ export function AppShell() {
           const next = { ...prev };
           ids.forEach((id) => delete next[id]);
           return next;
+        });
+      }}
+      onToggleDayChecked={(dayKey: DayKey) => {
+        setCheckedDays((prev) => {
+          const wk = prev[currentWeek] ?? {};
+          const isOn = Boolean(wk[dayKey]);
+          const nextWk: Partial<Record<DayKey, boolean>> = { ...wk };
+          if (isOn) delete nextWk[dayKey];
+          else nextWk[dayKey] = true;
+          return { ...prev, [currentWeek]: nextWk };
         });
       }}
       onPrevWeek={() => setCurrentWeek((w) => Math.max(1, w - 1))}

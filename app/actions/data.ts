@@ -41,6 +41,15 @@ export async function clearCheckedAction(ingredientIds: string[]): Promise<void>
   await api.clearChecked(ingredientIds);
 }
 
+export async function toggleDayCheckedAction(
+  weekId: string,
+  dayKey: string,
+  shouldCheck: boolean
+): Promise<void> {
+  await requireAuth();
+  await api.setDayChecked(weekId, dayKey, shouldCheck);
+}
+
 export async function createWeekAction(weekNum: number): Promise<string> {
   await requireAuth();
   return api.createWeek(weekNum);

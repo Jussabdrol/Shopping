@@ -2,6 +2,7 @@ import { query } from "@/lib/db";
 import type { CategoryId, DayKey } from "@/lib/constants";
 import type {
   Checked,
+  DayChecked,
   HistoryItem,
   Ingredient,
   Weeks,
@@ -16,6 +17,7 @@ type IngredientRow = {
   category: string;
 };
 type CheckedRow = { ingredient_id: string };
+type CheckedDayRow = { week_id: string; day_key: string };
 type HistoryRow = { name: string; category: string };
 
 export type WeekIndex = Record<number, string>;
@@ -25,6 +27,7 @@ export type InitialAppData = {
   weekIdByNum: WeekIndex;
   currentWeek: number;
   checked: Checked;
+  checkedDays: DayChecked;
   history: HistoryItem[];
 };
 
@@ -38,22 +41,26 @@ export async function ensureInitialWeek(): Promise<void> {
 export async function loadAll(): Promise<InitialAppData> {
   await ensureInitialWeek();
 
-  const [weeksResult, ingredientsResult, checkedResult, historyResult] =
-    await Promise.all([
-      query<WeekRow>(
-        `select id, week_num from weeks order by week_num asc`
-      ),
-      query<IngredientRow>(
-        `select id, week_id, day_key, name, category
-           from ingredients
-          order by created_at asc`
-      ),
-      query<CheckedRow>(`select ingredient_id from checked_items`),
-      query<HistoryRow>(
-        `select name, category from ingredient_history
-          order by used_count desc, updated_at desc`
-      ),
-    ]);
+  const [
+    weeksResult,
+    ingredientsResult,
+    checkedResult,
+    checkedDaysResult,
+    historyResult,
+  ] = await Promise.all([
+    query<WeekRow>(`select id, week_num from weeks order by week_num asc`),
+    query<IngredientRow>(
+      `select id, week_id, day_key, name, category
+         from ingredients
+        order by created_at asc`
+    ),
+    query<CheckedRow>(`select ingredient_id from checked_items`),
+    query<CheckedDayRow>(`select week_id, day_key from checked_days`),
+    query<HistoryRow>(
+      `select name, category from ingredient_history
+        order by used_count desc, updated_at desc`
+    ),
+  ]);
 
   const weekList = weeksResult.rows;
   const weekIdByNum: WeekIndex = {};
@@ -81,6 +88,14 @@ export async function loadAll(): Promise<InitialAppData> {
     checked[row.ingredient_id] = true;
   });
 
+  const checkedDays: DayChecked = {};
+  checkedDaysResult.rows.forEach((row) => {
+    const week = weekList.find((w) => w.id === row.week_id);
+    if (!week) return;
+    const bucket = checkedDays[week.week_num] ?? (checkedDays[week.week_num] = {});
+    bucket[row.day_key as DayKey] = true;
+  });
+
   const history: HistoryItem[] = historyResult.rows.map((row) => ({
     name: row.name,
     category: row.category as CategoryId,
@@ -89,7 +104,26 @@ export async function loadAll(): Promise<InitialAppData> {
   const weekNums = weekList.map((w) => w.week_num);
   const currentWeek = weekNums.length > 0 ? Math.min(...weekNums) : 1;
 
-  return { weeks, weekIdByNum, currentWeek, checked, history };
+  return { weeks, weekIdByNum, currentWeek, checked, checkedDays, history };
+}
+
+export async function setDayChecked(
+  weekId: string,
+  dayKey: string,
+  shouldCheck: boolean
+): Promise<void> {
+  if (shouldCheck) {
+    await query(
+      `insert into checked_days (week_id, day_key) values ($1, $2)
+       on conflict (week_id, day_key) do nothing`,
+      [weekId, dayKey]
+    );
+  } else {
+    await query(
+      `delete from checked_days where week_id = $1 and day_key = $2`,
+      [weekId, dayKey]
+    );
+  }
 }
 
 export async function addIngredient(opts: {

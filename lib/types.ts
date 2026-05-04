@@ -12,6 +12,8 @@ export type Weeks = Record<number, WeekData>;
 
 export type Checked = Record<string, boolean>;
 
+export type DayChecked = Record<number, Partial<Record<DayKey, boolean>>>;
+
 export type HistoryItem = {
   name: string;
   category: CategoryId;
