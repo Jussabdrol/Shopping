@@ -207,55 +207,38 @@ body {
   justify-content: center;
 }
 .day-dot.general {
+  width: 8px;
+  height: 8px;
   background: #C4622D;
 }
 
-/* Day dot acting as a checkbox */
+/* Day dot acting as a checkbox — matches the boodschappenlijst .check-circle */
 .day-dot-checkable {
   width: 22px;
   height: 22px;
   background: transparent;
-  border: 2px solid #2D5A1B;
+  border: 2px solid #C5BFAF;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-  position: relative;
-}
-.day-dot-checkable::before {
-  content: "";
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #2D5A1B;
-  transition: opacity 0.15s;
+  transition: all 0.15s;
 }
 .day-dot-checkable.checked {
   background: #2D5A1B;
   border-color: #2D5A1B;
 }
-.day-dot-checkable.checked::before {
-  opacity: 0;
-}
-.day-dot-checkable:active {
-  background: #F5F2EA;
-}
-.day-dot-checkable.checked:active {
-  background: #1E3E12;
-}
 .day-dot-tick {
-  position: absolute;
   color: #fff;
   font-size: 12px;
   font-weight: 700;
   line-height: 1;
 }
 
-/* Faded/strikethrough state for a checked-off day */
+/* Mirrors .grocery-item.checked: fade the whole row + strike the name */
+.day-section.day-checked {
+  opacity: 0.45;
+  transition: opacity 0.2s;
+}
 .day-section.day-checked .day-name {
   text-decoration: line-through;
-  color: #9AAA8A;
-}
-.day-section.day-checked .day-count {
-  opacity: 0.5;
 }
 .day-name {
   font-size: 14px;
