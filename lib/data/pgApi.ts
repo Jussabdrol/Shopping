@@ -1,5 +1,5 @@
 import { query } from "@/lib/db";
-import type { CategoryId, DayKey } from "@/lib/constants";
+import { DAYS, type CategoryId, type DayKey } from "@/lib/constants";
 import type {
   Checked,
   DayChecked,
@@ -101,8 +101,10 @@ export async function loadAll(): Promise<InitialAppData> {
     category: row.category as CategoryId,
   }));
 
-  const weekNums = weekList.map((w) => w.week_num);
-  const currentWeek = weekNums.length > 0 ? Math.min(...weekNums) : 1;
+  const weekNums = weekList.map((w) => w.week_num).sort((a, b) => a - b);
+  const currentWeek =
+    weekNums.find((num) => DAYS.some((day) => !checkedDays[num]?.[day])) ??
+    (weekNums.length > 0 ? weekNums[weekNums.length - 1] : 1);
 
   return { weeks, weekIdByNum, currentWeek, checked, checkedDays, history };
 }
