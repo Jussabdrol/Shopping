@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { useLocalStorage } from "@/lib/useLocalStorage";
 import type {
   Checked,
@@ -9,17 +10,21 @@ import type {
   WeekData,
   Weeks,
 } from "@/lib/types";
-import type { DayKey } from "@/lib/constants";
+import { DAYS, type DayKey } from "@/lib/constants";
 import { AppView } from "./AppView";
 
-export function AppShell() {
-  const [weeks, setWeeks] = useLocalStorage<Weeks>("grocery-weeks", { 1: {} });
-  const [currentWeek, setCurrentWeek] = useLocalStorage<number>(
-    "grocery-current-week",
-    1
+function computeSmartWeek(weeks: Weeks, checkedDays: DayChecked): number {
+  const weekNums = Object.keys(weeks).map(Number).sort((a, b) => a - b);
+  return (
+    weekNums.find((num) => DAYS.some((day) => !checkedDays[num]?.[day])) ??
+    (weekNums.length > 0 ? weekNums[weekNums.length - 1] : 1)
   );
+}
+
+export function AppShell() {
+  const [weeks, setWeeks, weeksHydrated] = useLocalStorage<Weeks>("grocery-weeks", { 1: {} });
   const [checked, setChecked] = useLocalStorage<Checked>("grocery-checked", {});
-  const [checkedDays, setCheckedDays] = useLocalStorage<DayChecked>(
+  const [checkedDays, setCheckedDays, daysHydrated] = useLocalStorage<DayChecked>(
     "grocery-day-checked",
     {}
   );
@@ -27,6 +32,15 @@ export function AppShell() {
     "grocery-history",
     []
   );
+
+  const [currentWeek, setCurrentWeek] = useState(1);
+  const smartWeekSetRef = useRef(false);
+
+  useEffect(() => {
+    if (!weeksHydrated || !daysHydrated || smartWeekSetRef.current) return;
+    smartWeekSetRef.current = true;
+    setCurrentWeek(computeSmartWeek(weeks, checkedDays));
+  }, [weeksHydrated, daysHydrated, weeks, checkedDays]);
 
   const weekNums = Object.keys(weeks).map(Number);
   const totalWeeks = weekNums.length > 0 ? Math.max(...weekNums) : 1;
