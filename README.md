@@ -53,9 +53,11 @@ data is uploaded once and then cleared.
 
 ## Design tokens
 
-The current interface uses an oat canvas (`#FAF7F2`), white cards,
-ink-blue text/navigation (`#293F54`), and terracotta actions (`#A64F36`).
-The brand icon adds a soft apricot checkmark (`#EDB38D`). Category badges
+The selected interface palette combines a warm-white canvas (`#FBF9F7`),
+white cards, lavender-gray navigation (`#70657F`), dusty-rose actions
+(`#916A72`), pale lavender week panels (`#EFECF3`), and sand details
+(`#EEE3D3`). Body text is `#423D48`; secondary text is `#716871`.
+The brand icon uses lavender-gray with a sand checkmark. Category badges
 retain their distinct food-group colors. Current tokens, responsive styles,
 focus states, and safe-area spacing live in `app/globals.css`.
 The tables below preserve the original design document for reference.

@@ -4,18 +4,19 @@
 
 :root {
   color-scheme: light;
-  /* Warm pantry palette: oat surfaces, ink-blue structure, terracotta actions. */
-  --canvas: #faf7f2;
+  /* Selected palette: lavender-gray navigation, dusty-rose actions, sand details. */
+  --canvas: #fbf9f7;
   --surface: #ffffff;
-  --ink: #293f54;
-  --muted: #71665e;
-  --action: #a64f36;
-  --action-hover: #873d29;
-  --line: #e7ded4;
-  --soft: #f2ebe2;
-  --brand: #293f54;
-  --brand-accent: #edb38d;
-  --selected: #eaf0f5;
+  --ink: #423d48;
+  --muted: #716871;
+  --action: #916a72;
+  --action-hover: #79555f;
+  --line: #e6e0e2;
+  --soft: #f3f0f1;
+  --brand: #70657f;
+  --brand-accent: #eee3d3;
+  --selected: #efecf3;
+  --detail: #eee3d3;
   --radius: 18px;
 }
 * {
@@ -56,7 +57,7 @@ select {
   outline-offset: 4px;
 }
 :focus-visible {
-  outline: 3px solid #a64f36;
+  outline: 3px solid #916a72;
 }
 button:disabled {
   cursor: default;
@@ -94,7 +95,7 @@ svg {
   border-radius: 15px;
   background: var(--brand);
   color: var(--canvas);
-  box-shadow: 0 3px 8px #293f5415;
+  box-shadow: 0 3px 8px #423d4815;
 }
 .brand-mark svg path:last-child {
   stroke: var(--brand-accent);
@@ -146,8 +147,8 @@ svg {
   gap: 12px;
   margin: 14px 24px 0;
   padding: 14px 14px 14px 18px;
-  background: var(--soft);
-  border: 1px solid #e7ded4;
+  background: var(--selected);
+  border: 1px solid #e6e0e2;
   border-radius: var(--radius);
 }
 .week-selector .eyebrow {
@@ -169,8 +170,8 @@ svg {
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  border: 1px solid #d8cbbd;
-  background: #fffcf8;
+  border: 1px solid #d8ccd4;
+  background: #fdfbfe;
   color: var(--brand);
   display: flex;
   align-items: center;
@@ -199,7 +200,7 @@ svg {
   gap: 4px;
   margin: 20px 24px 0;
   padding: 4px;
-  background: #eee8df;
+  background: #f3f0f1;
   border-radius: 14px;
 }
 .tab-btn {
@@ -214,7 +215,7 @@ svg {
   border: 0;
   border-radius: 11px;
   background: transparent;
-  color: #71665e;
+  color: #716871;
   font-size: 13px;
   font-weight: 500;
   transition:
@@ -224,7 +225,7 @@ svg {
 .tab-btn.active {
   background: var(--brand);
   color: white;
-  box-shadow: 0 2px 5px #293f540c;
+  box-shadow: 0 2px 5px #423d480c;
 }
 .tab-btn svg {
   width: 18px;
@@ -243,7 +244,7 @@ svg {
   border-radius: var(--radius);
   margin-bottom: 10px;
   border: 1px solid var(--line);
-  box-shadow: 0 2px 4px #293f5403;
+  box-shadow: 0 2px 4px #423d4803;
 }
 .day-header {
   display: flex;
@@ -265,7 +266,7 @@ svg {
 .check-circle {
   width: 23px;
   height: 23px;
-  border: 1.5px solid #8b939c;
+  border: 1.5px solid #948796;
   border-radius: 8px;
   display: inline-flex;
   align-items: center;
@@ -314,13 +315,13 @@ svg {
 .day-count {
   font-size: 11px;
   font-weight: 500;
-  color: #695e53;
-  background: var(--soft);
+  color: #685e6c;
+  background: var(--detail);
   padding: 3px 8px;
   border-radius: 7px;
 }
 .day-chevron {
-  color: #7a7269;
+  color: #7a6d7d;
   transform: rotate(90deg);
   transition: transform 0.2s;
 }
@@ -333,25 +334,25 @@ svg {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #a64f36;
+  color: #916a72;
 }
 .day-checked {
-  background: #eef2f5;
+  background: #f3f0f1;
 }
 .day-checked .day-name {
-  color: #626f7a;
+  color: #756878;
   text-decoration: line-through;
 }
 .day-body {
   padding: 4px 16px 16px;
-  border-top: 1px solid #eee7de;
+  border-top: 1px solid #f0ebed;
 }
 .ingredient-item {
   display: flex;
   align-items: center;
   gap: 4px;
   padding: 6px 0;
-  border-bottom: 1px solid #eee7de;
+  border-bottom: 1px solid #f0ebed;
 }
 .ingredient-info {
   display: flex;
@@ -407,7 +408,7 @@ svg {
   border: 0;
   border-radius: 10px;
   background: none;
-  color: #7a7269;
+  color: #7a6d7d;
 }
 .delete-btn:hover {
   color: #a12f32;
@@ -431,15 +432,15 @@ svg {
   width: 100%;
   min-height: 48px;
   padding: 11px 12px;
-  border: 1px solid #cbbdad;
+  border: 1px solid #cfc2cc;
   border-radius: 11px;
   font-size: 16px;
-  background: #fdfbf8;
+  background: #fdfbfe;
   color: var(--ink);
   transition: border-color 0.15s;
 }
 .add-input::placeholder {
-  color: #807264;
+  color: #7d6e7e;
   font-size: 14px;
 }
 .add-input:focus,
@@ -451,11 +452,11 @@ svg {
   min-width: 0;
   min-height: 44px;
   padding: 8px 10px;
-  border: 1px solid #cbbdad;
+  border: 1px solid #cfc2cc;
   border-radius: 11px;
   font-size: 16px;
-  color: #695e53;
-  background: #fdfbf8;
+  color: #685e6c;
+  background: #fdfbfe;
   cursor: pointer;
 }
 .add-btn {
@@ -481,7 +482,7 @@ svg {
   background: white;
   border: 1px solid var(--line);
   border-radius: 12px;
-  box-shadow: 0 10px 30px #293f5420;
+  box-shadow: 0 10px 30px #423d4820;
   max-height: 240px;
   overflow-y: auto;
 }
@@ -492,7 +493,7 @@ svg {
   gap: 8px;
   min-height: 48px;
   padding: 10px 12px;
-  border-bottom: 1px solid #eee7de;
+  border-bottom: 1px solid #f0ebed;
   cursor: pointer;
 }
 .autocomplete-item:last-child {
@@ -521,7 +522,7 @@ svg {
 }
 .progress-bar-wrap {
   height: 6px;
-  background: #e4e9ee;
+  background: #e6e0e9;
   border-radius: 6px;
   overflow: hidden;
 }
@@ -584,11 +585,11 @@ svg {
   color: var(--muted);
 }
 .grocery-item.checked {
-  background: #eef2f5;
+  background: #f3f0f1;
 }
 .grocery-item.checked .grocery-item-name {
   text-decoration: line-through;
-  color: #626f7a;
+  color: #756878;
 }
 .check-tick {
   visibility: hidden;
@@ -600,7 +601,7 @@ svg {
   text-align: center;
   padding: 40px 20px 48px;
   background: #ffffff80;
-  border: 1px dashed #cbbdad;
+  border: 1px dashed #cfc2cc;
   border-radius: var(--radius);
 }
 .empty-icon {
@@ -633,15 +634,15 @@ svg {
   width: 100%;
   min-height: 46px;
   padding: 12px;
-  border: 1px solid #cbbdad;
+  border: 1px solid #cfc2cc;
   border-radius: 12px;
-  color: #695e53;
+  color: #685e6c;
   background: transparent;
   font-size: 13px;
 }
 .clear-btn:hover {
-  border-color: #a64f36;
-  color: #a64f36;
+  border-color: #916a72;
+  color: #916a72;
 }
 .app-footer {
   padding: 8px 24px calc(24px + env(safe-area-inset-bottom));
@@ -694,7 +695,7 @@ svg {
   background: white;
   border: 1px solid var(--line);
   border-radius: 24px;
-  box-shadow: 0 12px 48px #293f5406;
+  box-shadow: 0 12px 48px #423d4806;
 }
 .login-card .brand-mark {
   width: 64px;
@@ -756,11 +757,11 @@ svg {
 
 @media (min-width: 640px) {
   body {
-    background: #eee7de;
+    background: #f0ebed;
   }
   .app-root {
-    border-left: 1px solid #e7ded4;
-    border-right: 1px solid #e7ded4;
+    border-left: 1px solid #e6e0e2;
+    border-right: 1px solid #e6e0e2;
   }
   .app-header {
     padding-top: 40px;
