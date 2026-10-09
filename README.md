@@ -53,8 +53,10 @@ data is uploaded once and then cleared.
 
 ## Design tokens
 
-The current interface uses evergreen (`#245744`), a soft off-white
-canvas (`#F6F7F2`), and white cards. Current tokens, responsive styles,
+The current interface uses an oat canvas (`#FAF7F2`), white cards,
+ink-blue text/navigation (`#293F54`), and terracotta actions (`#A64F36`).
+The brand icon adds a soft apricot checkmark (`#EDB38D`). Category badges
+retain their distinct food-group colors. Current tokens, responsive styles,
 focus states, and safe-area spacing live in `app/globals.css`.
 The tables below preserve the original design document for reference.
 
