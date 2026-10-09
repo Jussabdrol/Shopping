@@ -4,14 +4,18 @@
 
 :root {
   color-scheme: light;
-  --canvas: #f6f7f2;
+  /* Warm pantry palette: oat surfaces, ink-blue structure, terracotta actions. */
+  --canvas: #faf7f2;
   --surface: #ffffff;
-  --ink: #20392e;
-  --muted: #667568;
-  --green: #245744;
-  --green-dark: #193f31;
-  --line: #dfe5dc;
-  --soft: #eaf0e6;
+  --ink: #293f54;
+  --muted: #71665e;
+  --action: #a64f36;
+  --action-hover: #873d29;
+  --line: #e7ded4;
+  --soft: #f2ebe2;
+  --brand: #293f54;
+  --brand-accent: #edb38d;
+  --selected: #eaf0f5;
   --radius: 18px;
 }
 * {
@@ -52,7 +56,7 @@ select {
   outline-offset: 4px;
 }
 :focus-visible {
-  outline: 3px solid #548868;
+  outline: 3px solid #a64f36;
 }
 button:disabled {
   cursor: default;
@@ -88,9 +92,12 @@ svg {
   width: 48px;
   height: 48px;
   border-radius: 15px;
-  background: var(--green);
+  background: var(--brand);
   color: var(--canvas);
-  box-shadow: 0 3px 8px #24574415;
+  box-shadow: 0 3px 8px #293f5415;
+}
+.brand-mark svg path:last-child {
+  stroke: var(--brand-accent);
 }
 .brand-copy {
   flex: 1;
@@ -127,7 +134,7 @@ svg {
   padding: 4px 0 4px 4px;
 }
 .logout-link:hover {
-  color: var(--green);
+  color: var(--action);
   text-decoration: underline;
 }
 
@@ -140,7 +147,7 @@ svg {
   margin: 14px 24px 0;
   padding: 14px 14px 14px 18px;
   background: var(--soft);
-  border: 1px solid #dbe5d6;
+  border: 1px solid #e7ded4;
   border-radius: var(--radius);
 }
 .week-selector .eyebrow {
@@ -162,17 +169,17 @@ svg {
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  border: 1px solid #d7e0d1;
-  background: #f8faf5;
-  color: var(--green);
+  border: 1px solid #d8cbbd;
+  background: #fffcf8;
+  color: var(--brand);
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background 0.15s;
 }
 .week-add-btn {
-  background: var(--green);
-  border-color: var(--green);
+  background: var(--action);
+  border-color: var(--action);
   color: white;
   margin-left: 4px;
 }
@@ -185,14 +192,14 @@ svg {
 .week-add-btn:hover,
 .add-btn:hover,
 .login-submit:hover {
-  background: var(--green-dark);
+  background: var(--action-hover);
 }
 .tab-bar {
   display: flex;
   gap: 4px;
   margin: 20px 24px 0;
   padding: 4px;
-  background: #e9ede5;
+  background: #eee8df;
   border-radius: 14px;
 }
 .tab-btn {
@@ -207,7 +214,7 @@ svg {
   border: 0;
   border-radius: 11px;
   background: transparent;
-  color: #566557;
+  color: #71665e;
   font-size: 13px;
   font-weight: 500;
   transition:
@@ -215,9 +222,9 @@ svg {
     color 0.15s;
 }
 .tab-btn.active {
-  background: white;
-  color: var(--green);
-  box-shadow: 0 2px 5px #20392e0c;
+  background: var(--brand);
+  color: white;
+  box-shadow: 0 2px 5px #293f540c;
 }
 .tab-btn svg {
   width: 18px;
@@ -236,7 +243,7 @@ svg {
   border-radius: var(--radius);
   margin-bottom: 10px;
   border: 1px solid var(--line);
-  box-shadow: 0 2px 4px #20392e03;
+  box-shadow: 0 2px 4px #293f5403;
 }
 .day-header {
   display: flex;
@@ -258,7 +265,7 @@ svg {
 .check-circle {
   width: 23px;
   height: 23px;
-  border: 1.5px solid #a8b5a6;
+  border: 1.5px solid #8b939c;
   border-radius: 8px;
   display: inline-flex;
   align-items: center;
@@ -269,8 +276,8 @@ svg {
 }
 .day-dot-checkable.checked .day-check-circle,
 .grocery-item.checked .check-circle {
-  border-color: var(--green);
-  background: var(--green);
+  border-color: var(--brand);
+  background: var(--brand);
 }
 .day-disclosure {
   flex: 1;
@@ -307,13 +314,13 @@ svg {
 .day-count {
   font-size: 11px;
   font-weight: 500;
-  color: #51644e;
+  color: #695e53;
   background: var(--soft);
   padding: 3px 8px;
   border-radius: 7px;
 }
 .day-chevron {
-  color: #768775;
+  color: #7a7269;
   transform: rotate(90deg);
   transition: transform 0.2s;
 }
@@ -326,25 +333,25 @@ svg {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #9c6438;
+  color: #a64f36;
 }
 .day-checked {
-  background: #eff2ec;
+  background: #eef2f5;
 }
 .day-checked .day-name {
-  color: #687865;
+  color: #626f7a;
   text-decoration: line-through;
 }
 .day-body {
   padding: 4px 16px 16px;
-  border-top: 1px solid #edf0e9;
+  border-top: 1px solid #eee7de;
 }
 .ingredient-item {
   display: flex;
   align-items: center;
   gap: 4px;
   padding: 6px 0;
-  border-bottom: 1px solid #edf0e9;
+  border-bottom: 1px solid #eee7de;
 }
 .ingredient-info {
   display: flex;
@@ -400,11 +407,11 @@ svg {
   border: 0;
   border-radius: 10px;
   background: none;
-  color: #768775;
+  color: #7a7269;
 }
 .delete-btn:hover {
-  color: #a1462e;
-  background: #fbeee8;
+  color: #a12f32;
+  background: #fceeee;
 }
 
 /* Full-width entry prevents cramped text and iOS input zoom. */
@@ -424,31 +431,31 @@ svg {
   width: 100%;
   min-height: 48px;
   padding: 11px 12px;
-  border: 1px solid #d4ded0;
+  border: 1px solid #cbbdad;
   border-radius: 11px;
   font-size: 16px;
-  background: #fafbf7;
+  background: #fdfbf8;
   color: var(--ink);
   transition: border-color 0.15s;
 }
 .add-input::placeholder {
-  color: #73806f;
+  color: #807264;
   font-size: 14px;
 }
 .add-input:focus,
 .cat-select:focus {
-  border-color: var(--green);
+  border-color: var(--action);
 }
 .cat-select {
   width: 100%;
   min-width: 0;
   min-height: 44px;
   padding: 8px 10px;
-  border: 1px solid #d4ded0;
+  border: 1px solid #cbbdad;
   border-radius: 11px;
   font-size: 16px;
-  color: #52644c;
-  background: #fafbf7;
+  color: #695e53;
+  background: #fdfbf8;
   cursor: pointer;
 }
 .add-btn {
@@ -460,7 +467,7 @@ svg {
   padding: 8px 12px;
   border: 0;
   border-radius: 11px;
-  background: var(--green);
+  background: var(--action);
   color: white;
   font-size: 12px;
   font-weight: 500;
@@ -474,7 +481,7 @@ svg {
   background: white;
   border: 1px solid var(--line);
   border-radius: 12px;
-  box-shadow: 0 10px 30px #20392e20;
+  box-shadow: 0 10px 30px #293f5420;
   max-height: 240px;
   overflow-y: auto;
 }
@@ -485,7 +492,7 @@ svg {
   gap: 8px;
   min-height: 48px;
   padding: 10px 12px;
-  border-bottom: 1px solid #edf0e9;
+  border-bottom: 1px solid #eee7de;
   cursor: pointer;
 }
 .autocomplete-item:last-child {
@@ -514,13 +521,13 @@ svg {
 }
 .progress-bar-wrap {
   height: 6px;
-  background: #e2e8dc;
+  background: #e4e9ee;
   border-radius: 6px;
   overflow: hidden;
 }
 .progress-bar-fill {
   height: 100%;
-  background: var(--green);
+  background: var(--brand);
   border-radius: 6px;
   transition: width 0.3s ease;
 }
@@ -577,11 +584,11 @@ svg {
   color: var(--muted);
 }
 .grocery-item.checked {
-  background: #eff2ec;
+  background: #eef2f5;
 }
 .grocery-item.checked .grocery-item-name {
   text-decoration: line-through;
-  color: #687865;
+  color: #626f7a;
 }
 .check-tick {
   visibility: hidden;
@@ -593,7 +600,7 @@ svg {
   text-align: center;
   padding: 40px 20px 48px;
   background: #ffffff80;
-  border: 1px dashed #d4ded0;
+  border: 1px dashed #cbbdad;
   border-radius: var(--radius);
 }
 .empty-icon {
@@ -604,8 +611,8 @@ svg {
   align-items: center;
   justify-content: center;
   border-radius: 22px;
-  background: var(--soft);
-  color: var(--green);
+  background: var(--selected);
+  color: var(--brand);
 }
 .empty-title {
   font-family: "Lora", Georgia, serif;
@@ -626,15 +633,15 @@ svg {
   width: 100%;
   min-height: 46px;
   padding: 12px;
-  border: 1px solid #d4ded0;
+  border: 1px solid #cbbdad;
   border-radius: 12px;
-  color: #596a52;
+  color: #695e53;
   background: transparent;
   font-size: 13px;
 }
 .clear-btn:hover {
-  border-color: #9c6438;
-  color: #9c6438;
+  border-color: #a64f36;
+  color: #a64f36;
 }
 .app-footer {
   padding: 8px 24px calc(24px + env(safe-area-inset-bottom));
@@ -687,7 +694,7 @@ svg {
   background: white;
   border: 1px solid var(--line);
   border-radius: 24px;
-  box-shadow: 0 12px 48px #20392e06;
+  box-shadow: 0 12px 48px #293f5406;
 }
 .login-card .brand-mark {
   width: 64px;
@@ -725,7 +732,7 @@ svg {
 .login-submit {
   min-height: 48px;
   padding: 12px;
-  background: var(--green);
+  background: var(--action);
   color: white;
   border: 0;
   border-radius: 11px;
@@ -735,25 +742,25 @@ svg {
 }
 .login-error {
   font-size: 13px;
-  color: #a1462e;
-  background: #fbeee8;
+  color: #a12f32;
+  background: #fceeee;
   border-radius: 10px;
   padding: 12px;
   margin-top: 16px;
 }
 .login-message {
   font-size: 13px;
-  color: var(--green);
+  color: var(--action);
   margin-top: 12px;
 }
 
 @media (min-width: 640px) {
   body {
-    background: #eaefe5;
+    background: #eee7de;
   }
   .app-root {
-    border-left: 1px solid #dde4d6;
-    border-right: 1px solid #dde4d6;
+    border-left: 1px solid #e7ded4;
+    border-right: 1px solid #e7ded4;
   }
   .app-header {
     padding-top: 40px;
