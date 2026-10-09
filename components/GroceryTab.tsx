@@ -2,6 +2,7 @@
 
 import { CATEGORIES, DAY_ABBREV, DAY_KEYS } from "@/lib/constants";
 import type { Checked, Ingredient, WeekData } from "@/lib/types";
+import { Icon } from "./Icon";
 
 type SourcedIngredient = Ingredient & { source: string };
 
@@ -12,7 +13,12 @@ type Props = {
   onClearChecked: (ids: string[]) => void;
 };
 
-export function GroceryTab({ weekData, checked, onToggle, onClearChecked }: Props) {
+export function GroceryTab({
+  weekData,
+  checked,
+  onToggle,
+  onClearChecked,
+}: Props) {
   const allItems: SourcedIngredient[] = [];
   DAY_KEYS.forEach((key) => {
     (weekData[key] ?? []).forEach((item) => {
@@ -48,16 +54,41 @@ export function GroceryTab({ weekData, checked, onToggle, onClearChecked }: Prop
 
   return (
     <>
-      <div className="progress-bar-wrap" style={{ marginTop: 10 }}>
-        <div className="progress-bar-fill" style={{ width: `${progress}%` }} />
+      <div className="grocery-progress">
+        <div className="progress-label">
+          <span>
+            {total > 0 && checkedCount === total
+              ? "Alles in huis"
+              : "In je mandje"}
+          </span>
+          <span>
+            {checkedCount} van {total}
+          </span>
+        </div>
+        <div
+          className="progress-bar-wrap"
+          role="progressbar"
+          aria-label="Boodschappen afgevinkt"
+          aria-valuemin={0}
+          aria-valuemax={total || 1}
+          aria-valuenow={checkedCount}
+        >
+          <div
+            className="progress-bar-fill"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
       </div>
-      <div className="scroll-content" style={{ paddingTop: 10 }}>
+      <div className="scroll-content">
         {total === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">🛒</div>
-            <div className="empty-title">Lijst is leeg</div>
+            <div className="empty-icon">
+              <Icon name="bag" width="34" height="34" />
+            </div>
+            <div className="empty-title">Een frisse start</div>
             <div className="empty-sub">
-              Voeg ingrediënten toe in het Weekmenu om je lijst te vullen
+              Voeg ingrediënten toe in je weekmenu. Je boodschappen verschijnen
+              hier vanzelf, gesorteerd per afdeling.
             </div>
           </div>
         ) : (
@@ -76,17 +107,24 @@ export function GroceryTab({ weekData, checked, onToggle, onClearChecked }: Prop
                   </span>
                 </div>
                 {catItems.map((item) => (
-                  <div
+                  <button
                     key={item.id}
+                    type="button"
+                    aria-pressed={Boolean(checked[item.id])}
                     className={`grocery-item${checked[item.id] ? " checked" : ""}`}
                     onClick={() => onToggle(item.id)}
                   >
-                    <div className="check-circle">
-                      <span className="check-tick">✓</span>
-                    </div>
+                    <span className="check-circle" aria-hidden="true">
+                      <Icon
+                        name="check"
+                        className="check-tick"
+                        width="15"
+                        height="15"
+                      />
+                    </span>
                     <span className="grocery-item-name">{item.name}</span>
                     <span className="grocery-item-source">{item.source}</span>
-                  </div>
+                  </button>
                 ))}
               </div>
             );
@@ -96,7 +134,8 @@ export function GroceryTab({ weekData, checked, onToggle, onClearChecked }: Prop
       {checkedCount > 0 && (
         <div className="bottom-bar">
           <button className="clear-btn" onClick={handleClearChecked}>
-            Verwijder {checkedCount} afgevinkt{checkedCount !== 1 ? "e items" : " item"}
+            Verwijder {checkedCount} afgevinkt
+            {checkedCount !== 1 ? "e items" : " item"}
           </button>
         </div>
       )}

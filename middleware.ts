@@ -11,6 +11,8 @@ export async function middleware(request: NextRequest) {
   if (!dbConfigured || !auth.configured) return NextResponse.next();
 
   const { pathname } = request.nextUrl;
+  // Home-screen metadata must be available before signing in.
+  if (pathname === "/manifest.webmanifest") return NextResponse.next();
   if (PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
     return NextResponse.next();
   }
