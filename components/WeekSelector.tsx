@@ -1,5 +1,7 @@
 "use client";
 
+import { Icon } from "./Icon";
+
 type Props = {
   currentWeek: number;
   totalWeeks: number;
@@ -17,7 +19,12 @@ export function WeekSelector({
 }: Props) {
   return (
     <div className="week-selector">
-      <span className="week-label">Week {currentWeek}</span>
+      <div>
+        <span className="eyebrow">Jouw planning</span>
+        <div className="week-label" aria-live="polite">
+          Week {currentWeek}
+        </div>
+      </div>
       <div className="week-nav-btns">
         <button
           className="week-nav-btn"
@@ -25,7 +32,12 @@ export function WeekSelector({
           disabled={currentWeek <= 1}
           aria-label="Vorige week"
         >
-          ‹
+          <Icon
+            name="chevron"
+            className="chevron-prev"
+            width="16"
+            height="16"
+          />
         </button>
         <button
           className="week-nav-btn"
@@ -33,7 +45,7 @@ export function WeekSelector({
           disabled={currentWeek >= totalWeeks}
           aria-label="Volgende week"
         >
-          ›
+          <Icon name="chevron" width="16" height="16" />
         </button>
         <button
           className="week-add-btn"
@@ -41,7 +53,7 @@ export function WeekSelector({
           title="Nieuwe week"
           aria-label="Nieuwe week"
         >
-          +
+          <Icon name="plus" width="18" height="18" />
         </button>
       </div>
     </div>

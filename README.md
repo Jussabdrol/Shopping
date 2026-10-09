@@ -53,7 +53,26 @@ data is uploaded once and then cleared.
 
 ## Design tokens
 
-Preserved from the original design doc for reference.
+The current interface uses evergreen (`#245744`), a soft off-white
+canvas (`#F6F7F2`), and white cards. Current tokens, responsive styles,
+focus states, and safe-area spacing live in `app/globals.css`.
+The tables below preserve the original design document for reference.
+
+## Home-screen icon
+
+On iPhone/iPad, open the app in Safari, tap Share, then **Add to Home
+Screen** (Dutch: **Zet op beginscherm**). On Android, use the browser's
+**Add to Home screen** or **Install app** option. Installation help is
+also available on the login and app screens, and hidden in standalone mode.
+
+The manifest, Apple touch icon (180px), and regular/maskable icons
+(192px/512px) are served from `public/`. `public/icons/icon.svg` is the
+editable source. The opaque square icons leave masking to the operating
+system. The manifest stays publicly accessible when authentication is on.
+This adds home-screen presentation, not an offline cache or service worker;
+the connected app still needs an internet connection.
+
+## Original design reference
 
 ### Colors
 

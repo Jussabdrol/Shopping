@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { CATEGORIES, getCategory, type CategoryId } from "@/lib/constants";
 import type { HistoryItem, Ingredient } from "@/lib/types";
+import { Icon } from "./Icon";
 
 type Props = {
   onAdd: (item: Ingredient) => void;
@@ -97,7 +98,8 @@ export function AddIngredientRow({ onAdd, history }: Props) {
             if (name.trim()) setShowAuto(true);
           }}
           onKeyDown={handleKey}
-          placeholder="Voeg ingredient toe…"
+          placeholder="Bijv. tomaten of volkoren pasta"
+          aria-label="Ingrediënt"
           autoComplete="off"
         />
         {showAuto && suggestions.length > 0 && (
@@ -112,7 +114,9 @@ export function AddIngredientRow({ onAdd, history }: Props) {
                 }}
               >
                 <span className="autocomplete-item-name">{s.name}</span>
-                <span className={`category-badge ${getCategory(s.category).badgeClass}`}>
+                <span
+                  className={`category-badge ${getCategory(s.category).badgeClass}`}
+                >
                   {getCategory(s.category).label}
                 </span>
               </div>
@@ -122,6 +126,7 @@ export function AddIngredientRow({ onAdd, history }: Props) {
       </div>
       <select
         className="cat-select"
+        aria-label="Categorie"
         value={category}
         onChange={(e) => setCategory(e.target.value as CategoryId)}
       >
@@ -132,7 +137,7 @@ export function AddIngredientRow({ onAdd, history }: Props) {
         ))}
       </select>
       <button type="submit" className="add-btn" aria-label="Toevoegen">
-        +
+        <Icon name="plus" width="18" height="18" /> Toevoegen
       </button>
     </form>
   );

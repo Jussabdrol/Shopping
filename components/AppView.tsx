@@ -13,6 +13,8 @@ import type { DayKey } from "@/lib/constants";
 import { MenuTab } from "./MenuTab";
 import { GroceryTab } from "./GroceryTab";
 import { WeekSelector } from "./WeekSelector";
+import { BrandMark, Icon } from "./Icon";
+import { InstallHelp } from "./InstallHelp";
 
 type Tab = "menu" | "grocery";
 
@@ -59,16 +61,20 @@ export function AppView({
 
   const allIngredients = useMemo(
     () => Object.values(weekData).flat().filter(Boolean) as Ingredient[],
-    [weekData]
+    [weekData],
   );
   const allIngCount = allIngredients.length;
   const uncheckedCount = allIngredients.filter((i) => !checked[i.id]).length;
 
   return (
     <div className="app">
-      <div className="app-header">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-          <h1>Slim Boodschappen</h1>
+      <header className="app-header">
+        <div className="brand-row">
+          <BrandMark />
+          <div className="brand-copy">
+            <p className="eyebrow">Je week, goed geregeld</p>
+            <h1>Slim Boodschappen</h1>
+          </div>
           {userEmail && onSignOut && (
             <button className="logout-link" onClick={onSignOut} type="button">
               Uitloggen
@@ -80,7 +86,7 @@ export function AppView({
             ? `${allIngCount} ingrediënt${allIngCount !== 1 ? "en" : ""} gepland`
             : `${uncheckedCount} item${uncheckedCount !== 1 ? "s" : ""} nog te halen`}
         </div>
-      </div>
+      </header>
 
       <WeekSelector
         currentWeek={currentWeek}
@@ -93,40 +99,53 @@ export function AppView({
         }}
       />
 
-      <div style={{ padding: "10px 24px 0" }}>
-        <div className="tab-bar">
-          <button
-            className={`tab-btn${tab === "menu" ? " active" : ""}`}
-            onClick={() => setTab("menu")}
-          >
-            📅 Weekmenu
-          </button>
-          <button
-            className={`tab-btn${tab === "grocery" ? " active" : ""}`}
-            onClick={() => setTab("grocery")}
-          >
-            🛒 Boodschappenlijst
-          </button>
-        </div>
-      </div>
+      <nav className="tab-bar" aria-label="Overzichten">
+        <button
+          type="button"
+          aria-pressed={tab === "menu"}
+          aria-controls="week-content"
+          className={`tab-btn${tab === "menu" ? " active" : ""}`}
+          onClick={() => setTab("menu")}
+        >
+          <Icon name="calendar" /> Weekmenu
+        </button>
+        <button
+          type="button"
+          aria-pressed={tab === "grocery"}
+          aria-controls="week-content"
+          className={`tab-btn${tab === "grocery" ? " active" : ""}`}
+          onClick={() => setTab("grocery")}
+        >
+          <Icon name="list" /> Boodschappenlijst
+        </button>
+      </nav>
 
-      {tab === "menu" ? (
-        <MenuTab
-          weekData={weekData}
-          checkedDays={checkedDays[currentWeek] ?? {}}
-          onAdd={onAddIngredient}
-          onDelete={onDeleteIngredient}
-          onToggleDayChecked={onToggleDayChecked}
-          history={history}
-        />
-      ) : (
-        <GroceryTab
-          weekData={weekData}
-          checked={checked}
-          onToggle={onToggleChecked}
-          onClearChecked={onClearChecked}
-        />
-      )}
+      <main
+        id="week-content"
+        className="tab-content"
+        aria-label={tab === "menu" ? "Weekmenu" : "Boodschappenlijst"}
+      >
+        {tab === "menu" ? (
+          <MenuTab
+            weekData={weekData}
+            checkedDays={checkedDays[currentWeek] ?? {}}
+            onAdd={onAddIngredient}
+            onDelete={onDeleteIngredient}
+            onToggleDayChecked={onToggleDayChecked}
+            history={history}
+          />
+        ) : (
+          <GroceryTab
+            weekData={weekData}
+            checked={checked}
+            onToggle={onToggleChecked}
+            onClearChecked={onClearChecked}
+          />
+        )}
+      </main>
+      <footer className="app-footer">
+        <InstallHelp />
+      </footer>
     </div>
   );
 }
